@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0c1722">
+<title>Пульт рудника · Тыныс</title>
+<link rel="stylesheet" href="./futures.css">
+<style>
+:root{--soft:#8fc489;--hard:#d0805e;--wind:#5ec8e5;--sun:#f2c14e;--grid:#a3adb7;--v0:#ff9b8b;--v1:#ebcb88;--v2:#6ce0cc}
+.page{padding-top:26px}
+.hero{margin-bottom:22px;align-items:flex-end}
+.hero h1{font-size:clamp(28px,3vw,44px)}
+#demo-start{background:var(--teal);color:#09232c;border:0;border-radius:8px;padding:12px 20px;font:inherit;font-weight:600;font-size:15px;cursor:pointer;margin-top:12px}
+#demo-start:disabled{opacity:.5;cursor:wait}
+.mode{display:inline-flex;align-items:center;gap:10px;padding:8px 16px 8px 12px;border-radius:30px;font-weight:650;letter-spacing:.06em;font-size:13px;border:1px solid var(--line);background:#14222e;transition:all .5s}
+.mode i{width:10px;height:10px;border-radius:50%;background:var(--quiet)}
+.mode.inhale{background:#133c34;border-color:#2f7e6d;color:#bff6ea}.mode.inhale i{background:var(--teal);animation:breath 3.2s ease-in-out infinite}
+.mode.exhale{background:#3c2a1c;border-color:#7b583b;color:#ffd9bd}.mode.exhale i{background:var(--copper);animation:breath 3.2s ease-in-out infinite reverse}
+@keyframes breath{0%,100%{transform:scale(.7);opacity:.6}50%{transform:scale(1.35);opacity:1}}
+.clock{color:var(--muted);font-size:12px;font-variant-numeric:tabular-nums;margin-top:8px}
+.kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:18px}
+.kpi{padding:16px 18px}
+.kpi span{display:block;font-size:10px;letter-spacing:.1em;color:var(--muted);font-weight:650;text-transform:uppercase}
+.kpi b{display:block;font-size:30px;font-weight:550;letter-spacing:-.04em;margin:6px 0 2px;font-variant-numeric:tabular-nums}
+.kpi small{color:var(--quiet);font-size:11px}
+.kpi.good b{color:var(--teal)}.kpi.bad b{color:var(--red)}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:18px;align-items:start}
+.col{display:flex;flex-direction:column;gap:18px;min-width:0}
+.panel h2{font-size:18px}
+#map{display:block;width:100%;height:auto}
+#map text{fill:var(--ink);font:500 12px var(--font)}#map .lbl{fill:var(--muted);font-size:11px;font-weight:400}#map .ttl{font-size:11px;letter-spacing:.12em;fill:var(--quiet);font-weight:650}
+.flow{animation:dash 1.2s linear infinite}@keyframes dash{to{stroke-dashoffset:-24}}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:10px;font-size:11px;color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+#why{font-size:15px;line-height:1.6;margin:0}
+#src{font-size:11px;color:var(--quiet);margin-top:8px}
+.why{border-left:3px solid var(--teal)}
+.why.exhale{border-left-color:var(--copper)}
+#plan{display:block;width:100%;height:auto}
+#plan .lbl{fill:var(--quiet);font-size:10px}
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.btns button{background:#182d3b;border:1px solid #3b525f;border-radius:9px;padding:10px 12px;text-align:left;font-size:12px;font-weight:600;color:var(--ink)}
+.btns button:hover{border-color:var(--teal)}
+.btns button.on{background:#173d36;border-color:#3a9b88;color:var(--teal)}
+#events>div{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px dashed var(--line);font-size:12px}
+#events button{background:transparent;border:1px solid #3b525f;border-radius:6px;padding:3px 8px;font-size:11px;color:var(--muted)}
+#events button:hover{border-color:var(--red);color:var(--red)}
+.mute{color:var(--muted)}.note{font-size:11px;color:var(--quiet);line-height:1.6;margin:10px 0 0}
+#kpi th.v0{color:var(--v0)}#kpi th.v1{color:var(--v1)}#kpi th.v2{color:var(--v2)}
+.big{font-size:34px;font-weight:550;letter-spacing:-.04em;color:var(--teal)}
+.sz-pick{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px;font-size:12px;color:var(--muted);align-items:center}
+.sz-pick select{padding:5px 8px}
+#sizing th{white-space:normal;line-height:1.3;vertical-align:bottom}
+#now td:last-child{color:var(--ink)}
+.comparison-context{padding:13px 15px;margin-bottom:15px;border:1px solid var(--line);border-radius:10px;background:#101e29;font-size:12px;line-height:1.65}
+.comparison-context p{margin:0 0 6px}.comparison-context p:last-child{margin-bottom:0}
+#comparison-goal{font-weight:600}#comparison-emissions[data-direction=higher]{color:var(--v0)}
+#comparison-emissions[data-direction=lower]{color:var(--teal)}
+.comparison-help{font-size:12px;line-height:1.65;color:var(--muted);margin-top:12px}.comparison-help summary{cursor:pointer;color:var(--ink)}
+.comparison-help p{margin:8px 0 0}#flexstat{white-space:pre-line}
+.topbar nav{flex-wrap:wrap}
+@media(max-width:1250px){.grid{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:640px){.kpis{grid-template-columns:1fr 1fr}.kpi b{font-size:22px}.btns{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Перейти к пульту</a>
+<header class="topbar">
+  <a class="brand" href="./" aria-label="Тыныс: главная"><span class="brand-mark" aria-hidden="true">Т</span><span>ТЫНЫС <small>АКТОГАЙ / OPENEGIZ</small></span></a>
+  <nav aria-label="Разделы"><a href="./">Unity · главная</a><a href="./dashboard.html" aria-current="page">Пульт рудника</a><a href="./futures.html">Два будущих</a><a href="./3d.html">Обзор 3D</a></nav>
+  <div class="connection" id="connection" data-state="connecting"><i aria-hidden="true"></i><span id="conn-t">Подключение к Ditto</span></div>
+</header>
+
+<div class="page" id="main">
+  <section class="hero" aria-labelledby="page-title">
+    <div>
+      <p class="eyebrow">ПУЛЬТ ЭНЕРГЕТИКА · ЖИВЫЕ ДВОЙНИКИ</p>
+      <h1 id="page-title">Рудник Актогай <em>дышит</em> вместе с ветром.</h1>
+      <p id="equivalent-note" class="note">Сравнение в МВт строительства загружается из двойника энергосистемы.</p>
+      <p class="lead">Каждый час координатор решает, какую руду молоть и когда заряжать самосвалы, — и объясняет почему.</p>
+      <button id="demo-start" type="button">▶ Демо за 3 минуты</button>
+    </div>
+    <div style="text-align:right">
+      <div class="mode" id="mode"><i></i><span id="mode-t">—</span></div>
+      <div class="clock" id="clock">ожидание данных…</div>
+    </div>
+  </section>
+
+  <section class="kpis" aria-label="Главные показатели сейчас">
+    <div class="panel kpi bad"><span>CO₂ из сети сейчас</span><b id="k-co2">—</b><small>т в час · уголь 66 %</small></div>
+    <div class="panel kpi good"><span>Ветер и солнце</span><b id="k-ren">—</b><small>доля потребления сейчас</small></div>
+    <div class="panel kpi"><span>Сброс ВИЭ</span><b id="k-cur">—</b><small>МВт выбрасывается сейчас</small></div>
+    <div class="panel kpi good"><span>Медь к «как сейчас»</span><b id="k-cu">—</b><small>с начала прогона, с учётом склада</small></div>
+    <div class="panel kpi"><span>Оценка резерва KEGOC</span><b id="k-res">—</b><small>МВт снижения за следующий час</small></div>
+  </section>
+
+  <div class="grid">
+    <div class="col">
+      <section class="panel" aria-labelledby="map-title">
+        <div class="section-label"><span id="map-title">СХЕМА РУДНИКА · ДАННЫЕ ИЗ ДВОЙНИКОВ</span><span class="tiny-badge">LIVE</span></div>
+        <svg id="map" viewBox="0 0 1000 560" role="img" aria-label="Схема рудника Актогай: карьер, дорога, зарядка, склады, фабрика, ВЭС, СЭС, накопитель, подстанция">
+          <defs>
+            <radialGradient id="pitg" cx="50%" cy="45%"><stop offset="0" stop-color="#2a2019"/><stop offset=".6" stop-color="#4a3a2d"/><stop offset="1" stop-color="#6b553f"/></radialGradient>
+            <pattern id="dots" width="22" height="22" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1" fill="#1d2d3a"/></pattern>
+            <linearGradient id="bld" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1d3040"/><stop offset="1" stop-color="#15232f"/></linearGradient>
+          </defs>
+          <rect width="1000" height="560" fill="url(#dots)"/>
+          <!-- карьер -->
+          <g transform="translate(185,250)">
+            <ellipse rx="160" ry="118" fill="#6b553f"/>
+            <ellipse rx="160" ry="118" fill="none" stroke="#8a7055" stroke-width="2"/>
+            <ellipse rx="134" ry="98" fill="#5a4635" stroke="#7c6450" stroke-width="1.5"/>
+            <ellipse rx="108" ry="79" fill="#4c3b2e" stroke="#6e5846" stroke-width="1.5"/>
+            <ellipse rx="82" ry="60" fill="#3f3127" stroke="#614d3d" stroke-width="1.5"/>
+            <ellipse rx="56" ry="41" fill="url(#pitg)" stroke="#55443a" stroke-width="1.5"/>
+            <ellipse cx="10" cy="6" rx="14" ry="8" fill="#3d8f86" opacity=".85"/>
+            <path d="M-40,10 C-80,-20 -120,10 -128,40 C-130,70 -60,110 20,100 C90,90 150,40 152,0" fill="none" stroke="#9c8a74" stroke-width="5" stroke-dasharray="1 0" opacity=".55"/>
+            <g id="shovels"><circle cx="-26" cy="-2" r="8" fill="#f2b632"/><circle cx="26" cy="14" r="8" fill="#f2b632"/></g>
+            <text class="ttl" x="0" y="146" text-anchor="middle">КАРЬЕР</text>
+            <text id="t-pit" class="lbl" x="0" y="162" text-anchor="middle"></text>
+          </g>
+          <!-- дорога к складам -->
+          <path id="road" d="M330,232 C380,200 410,160 455,152 S505,160 520,166" fill="none" stroke="#5d6a77" stroke-width="12" stroke-linecap="round" opacity=".55"/>
+          <!-- зарядка -->
+          <g transform="translate(370,488)">
+            <rect x="-80" y="-30" width="160" height="62" rx="10" fill="url(#bld)" stroke="#2f4f68"/>
+            <text class="ttl" x="0" y="-38" text-anchor="middle">ЗАРЯДКА · 12 × 6 МВт</text>
+            <text id="t-charge" class="lbl" x="0" y="48" text-anchor="middle"></text>
+          </g>
+          <path d="M330,458 C300,420 280,380 255,352" stroke="#2f4f68" stroke-width="2" stroke-dasharray="4 5" fill="none"/>
+          <g id="trucks"></g>
+          <!-- склады -->
+          <g transform="translate(560,0)">
+            <text class="ttl" x="0" y="96" text-anchor="middle">СКЛАДЫ РУДЫ</text>
+            <g transform="translate(0,170)"><g id="pile-soft"><path d="M-54,24 C-30,-4 -12,-22 0,-24 C12,-22 30,-4 54,24Z" fill="var(--soft)"/></g></g>
+            <text id="t-ps" class="lbl" x="0" y="214" text-anchor="middle">мягкая</text>
+            <g transform="translate(0,282)"><g id="pile-hard"><path d="M-54,24 C-30,-4 -12,-22 0,-24 C12,-22 30,-4 54,24Z" fill="var(--hard)"/></g></g>
+            <text id="t-ph" class="lbl" x="0" y="326" text-anchor="middle">твёрдая</text>
+          </g>
+          <path d="M616,190 L700,150 M616,302 L700,212" stroke="#5d6a77" stroke-width="4" opacity=".6"/>
+          <!-- фабрика -->
+          <g transform="translate(700,112)">
+            <text class="ttl" x="100" y="-12" text-anchor="middle">ФАБРИКА · ДВЕ ЛИНИИ</text>
+            <g id="line0"><rect width="200" height="50" rx="10" fill="url(#bld)" stroke="#2f4f68"/><circle cx="28" cy="25" r="15" fill="none" stroke="#9fb6cc" stroke-width="3" stroke-dasharray="20 6" class="mill"/><text x="54" y="21">Линия 1</text><text class="lbl t" x="54" y="38"></text></g>
+            <g id="line1" transform="translate(0,62)"><rect width="200" height="50" rx="10" fill="url(#bld)" stroke="#2f4f68"/><circle cx="28" cy="25" r="15" fill="none" stroke="#9fb6cc" stroke-width="3" stroke-dasharray="20 6" class="mill"/><text x="54" y="21">Линия 2</text><text class="lbl t" x="54" y="38"></text></g>
+            <g transform="translate(0,124)"><rect width="200" height="50" rx="10" fill="url(#bld)" stroke="#5f5134"/><text x="16" y="21">Флотация → медь</text><text id="t-flot" class="lbl" x="16" y="38"></text></g>
+          </g>
+          <!-- энергия -->
+          <text class="ttl" x="560" y="388" text-anchor="middle">ВЭС 300 МВт</text>
+          <g id="windfarm" transform="translate(505,420)"></g>
+          <text id="t-wind" class="lbl" x="560" y="540" text-anchor="middle"></text>
+          <text class="ttl" x="700" y="388" text-anchor="middle">СЭС 250 МВт</text>
+          <g id="pvfield" transform="translate(660,430)"></g>
+          <text id="t-pv" class="lbl" x="700" y="540" text-anchor="middle"></text>
+          <g transform="translate(800,420)">
+            <text class="ttl" x="25" y="-32" text-anchor="middle">НАКОПИТЕЛЬ</text>
+            <rect width="50" height="72" rx="8" fill="url(#bld)" stroke="#2f4f68"/><rect id="bessbar" x="7" y="65" width="36" height="0" rx="3" fill="var(--teal)"/>
+            <text id="t-bess" class="lbl" x="25" y="92" text-anchor="middle"></text>
+          </g>
+          <g transform="translate(930,445)">
+            <rect x="-48" y="-30" width="96" height="60" rx="10" fill="url(#bld)" stroke="#2f4f68"/>
+            <text x="0" y="-6" text-anchor="middle">Подстанция</text><text id="t-grid" class="lbl" x="0" y="13" text-anchor="middle"></text>
+            <path d="M0,-30 L0,-112 M-22,-112 L22,-112 M-14,-96 L14,-96" stroke="var(--grid)" stroke-width="2"/>
+            <text class="ttl" x="0" y="-122" text-anchor="middle">KEGOC · УГОЛЬ 66 %</text>
+          </g>
+          <path id="flow-grid" class="flow" d="M944,338 L944,412" stroke="var(--grid)" stroke-width="3" fill="none" stroke-dasharray="8 8"/>
+          <path id="flow-ren" class="flow" d="M745,445 C790,392 850,398 882,432" stroke="var(--wind)" stroke-width="3" fill="none" stroke-dasharray="8 8"/>
+          <path class="flow" d="M900,415 C900,360 880,320 860,288" stroke="#9ff5c6" stroke-width="2.5" fill="none" stroke-dasharray="6 10" opacity=".7"/>
+          <text id="t-curt" x="640" y="372" class="lbl" style="fill:var(--red)"></text>
+        </svg>
+        <div class="legend"><span><i style="background:#6ce0cc"></i>самосвал гружёный</span><span><i style="background:#9aa6b2"></i>порожний</span><span><i style="background:#5ec8e5"></i>на зарядке</span><span><i style="background:#ebcb88"></i>ждёт зарядки</span><span><i style="background:var(--soft)"></i>мягкая руда</span><span><i style="background:var(--hard)"></i>твёрдая руда</span><span><i style="background:var(--grid)"></i>сеть</span><span><i style="background:var(--wind)"></i>ветер и солнце</span></div>
+      </section>
+
+      <section class="panel" aria-labelledby="equipment-title">
+        <div class="section-label"><span id="equipment-title">ОБОРУДОВАНИЕ И МАТЕРИАЛЬНЫЕ ПОТОКИ</span></div>
+        <p class="note">Экскаваторы → закреплённые самосвалы → дробилка → конвейер → склады → конвейер питания → мельницы → флотация → концентрат и хвосты. Вскрыша поступает в отвал; вода возвращается из хвостового хозяйства.</p>
+        <div class="table-wrap"><table><thead><tr><th>Объект</th><th>Состояние</th><th>Поток</th><th>МВт</th><th>об/мин</th><th>P80, мкм</th><th>Исправность, %</th><th>Готовность, %</th></tr></thead><tbody id="equipment-rows"></tbody></table></div>
+        <p class="note" id="material-stocks">Ожидание телеметрии</p>
+        <p class="note">Готовность — доля доступных часов с начала прогона. Исправность, ресурс до ТО и скорость привода — параметры учебной модели, не измерения на Актогае. Остановка оборудования ограничивает потоки и меняет нагрузку.</p>
+      </section>
+
+      <section class="panel why" id="whybox" aria-labelledby="why-title">
+        <div class="section-label"><span id="why-title">ПОЧЕМУ ТАК · РЕШЕНИЕ КООРДИНАТОРА</span></div>
+        <p id="why">—</p><div id="src"></div>
+      </section>
+
+      <section class="panel" aria-labelledby="plan-title">
+        <div class="section-label"><span id="plan-title">ПЛАН НА 24 ЧАСА</span><span class="tiny-badge">MPC · HiGHS</span></div>
+        <svg id="plan" viewBox="0 0 640 200" role="img" aria-label="План на сутки: ВИЭ, сеть, доля твёрдой руды, теневая цена"></svg>
+        <div class="legend"><span><i style="background:var(--wind)"></i>ВИЭ (прогноз), МВт</span><span><i style="background:var(--grid)"></i>из сети, МВт</span><span><i style="background:var(--hard)"></i>доля твёрдой руды в помоле</span><span><i style="background:#fff"></i>теневая цена энергии</span><span><i style="background:#ff9b8b"></i>предел сети</span></div>
+      </section>
+
+      <section class="panel" aria-labelledby="kpi-title">
+        <div class="section-label"><span id="kpi-title">ИТОГ С НАЧАЛА ПРОГОНА · ТА ЖЕ ПОГОДА И РУДА</span></div>
+        <div class="comparison-context">
+          <p id="comparison-goal">Цель управления ещё не получена из Ditto.</p>
+          <p id="comparison-period">Период накопления показателей ещё не получен.</p>
+          <p id="comparison-emissions">Сравнение CO₂ из сети ожидает данных обоих вариантов.</p>
+        </div>
+        <div class="table-wrap"><table id="kpi"><thead><tr><th></th><th class="v0">V0 как сейчас</th><th class="v1">V1 правила</th><th class="v2">V2 Тыныс</th></tr></thead><tbody id="kt"></tbody></table></div>
+        <p class="note">Таблица накапливает результаты за весь показанный период; ветер, солнце и CO₂ в верхних карточках относятся к текущему часу. После смены цели счётчики сохраняют предыдущую историю. «CO₂ из сети» считается по потреблённой сетевой энергии. «CO₂ с учётом запасов» — модельная оценка с поправкой на изменение складов и заряда батарей; она не заменяет выбросы из сети. Рост меди не означает снижения выбросов.</p>
+        <details class="comparison-help"><summary>Почему V0 и V1 могут совпадать?</summary><p>Это независимые расчёты на одной погоде и руде. В обычных условиях правила V1 выбирают ту же номинальную загрузку, что V0. При избытке ВИЭ V1 может выпускать больше меди без роста импорта из сети — тогда CO₂ совпадает даже при разном выпуске.</p></details>
+      </section>
+    </div>
+
+    <aside class="col">
+      <section class="panel" aria-labelledby="geo-title">
+        <div class="section-label"><span id="geo-title">ГЕОЛОГИЯ · GEOMET</span></div>
+        <p id="geo-active">Ожидание геологических двойников…</p>
+        <a href="3d.html" style="color:var(--teal)">Уступы по твёрдости →</a>
+        <p class="note">60 пространственных проб GeoMet v4. Геологический аналог: это не скважины Актогая. Cu нормирован к 0,43%; LCT принят за извлечение при P80 150 мкм. <a href="https://doi.org/10.5281/zenodo.7051975" target="_blank" rel="noopener">Hoffimann et al., CC BY 4.0</a>.</p>
+      </section>
+      <section class="panel" aria-labelledby="maintenance-title">
+        <div class="section-label"><span id="maintenance-title">РЕМОНТ НА ВЫДОХЕ</span></div>
+        <div id="maintenance-plan">Ожидание плана…</div>
+        <p class="note">ТО 4 ч, каждая четвёртая остановка — футеровка 12 ч. Перенос ±12 ч, одна бригада. Интервалы и ресурс — допущения; выбранное окно фиксируется.</p>
+      </section>
+      <section class="panel" aria-labelledby="goal-title">
+        <div class="section-label"><span id="goal-title">ЦЕЛЬ КООРДИНАТОРА</span></div>
+        <div class="btns"><button id="g-copper" aria-pressed="false">Больше меди</button><button id="g-green" aria-pressed="false">Меньше CO₂</button></div>
+        <p class="note" id="g-note">Ожидание выбранной цели из Ditto.</p>
+      </section>
+      <section class="panel" aria-labelledby="wi-title">
+        <div class="section-label"><span id="wi-title">ЧТО ЕСЛИ…</span><span class="tiny-badge">WHAT IF</span></div>
+        <div class="btns" id="btns"></div>
+        <div id="events" style="margin-top:10px"></div>
+      </section>
+      <section class="panel" aria-labelledby="flex-title">
+        <div class="section-label"><span id="flex-title">ОЦЕНКА ГИБКОСТИ ДЛЯ KEGOC</span></div>
+        <div>Снижение за следующий час: <span class="big" id="flex">—</span> МВт</div>
+        <div class="mute" style="font-size:12px">Предел по запасам: <b id="flexh">—</b> ч при неизменных условиях. Проверка траектории и восстановления — в «Двух будущих».</div>
+        <a href="futures.html" style="color:var(--teal);font-size:12px;font-weight:600">Проверить обещание →</a>
+        <p class="note" id="flexstat" role="status">Статистика резерва загружается…</p>
+      </section>
+      <section class="panel" aria-labelledby="sz-title">
+        <div class="section-label"><span id="sz-title">СКОЛЬКО СТРОИТЬ ВЭС И СЭС</span><span class="tiny-badge">ПРЕДРАСЧЁТ</span></div>
+        <div class="sz-pick"><label>ВЭС <select id="sz-w"></select> МВт</label><label>СЭС <select id="sz-p"></select> МВт</label></div>
+        <div class="table-wrap"><table><tbody id="sizing"><tr><td class="mute">расчёт не загружен</td></tr></tbody></table></div>
+        <p class="note">Предрасчёт (sizing.py), не пересчитывается на стенде. Год на реальной погоде Актогая 2024 (Open‑Meteo ERA5): 4 сезона × 14 суток. «Сегодня» — без ВИЭ и без координатора. «P80 150» — координатор с той же крупностью помола, что сейчас: показывает вклад одной лишь подстройки под ВИЭ. * CO₂ с учётом запасов — модельная поправка на изменение складов и заряда батарей к концу прогонов. Если эта оценка не передана, показано «—»; выбросы из сети отображаются отдельно.</p>
+      </section>
+      <section class="panel" aria-labelledby="now-title">
+        <div class="section-label"><span id="now-title">СЕЙЧАС</span></div>
+        <table><tbody id="now"></tbody></table>
+      </section>
+    </aside>
+  </div>
+</div>
+<script src="app.js?v=contest-sync-20261024"></script>
+<script src="demo.js?v=contest-sync-20261024"></script>
+</body>
+</html>

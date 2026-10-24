@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Тыныс 3D · Актогай</title>
+<style>
+:root{--good:#5fe3a1;--bad:#ff8a6b;--ink:#eef3f7;--mute:#a9bccb;--glass:rgba(12,20,30,.74);--line:rgba(140,180,220,.22)}
+html,body{margin:0;height:100%;overflow:hidden;background:#0b1118;color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+#c{position:fixed;inset:0;width:100%;height:100%;display:block}
+.hud{position:fixed;z-index:5}
+.glass{background:var(--glass);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:14px}
+.low-render .glass{backdrop-filter:none;-webkit-backdrop-filter:none;background:rgba(12,20,30,.92)}
+.good{color:var(--good)}.bad{color:var(--bad)}.mute{color:var(--mute)}
+#top{top:14px;left:16px;right:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;pointer-events:none}
+#top>*{pointer-events:auto}
+#brand{padding:7px 14px;font-weight:800;font-size:18px}#brand small{font-weight:400;color:var(--mute);font-size:13px;margin-left:6px}
+#mode{font-weight:800;font-size:15px;padding:8px 16px;border-radius:24px;letter-spacing:.04em;transition:all .6s}
+#mode.inhale{background:#18553a;color:#a4f7cb;box-shadow:0 0 30px #2bd17e77}
+#mode.exhale{background:#5a3a1d;color:#ffd2a6;box-shadow:0 0 30px #e08a3a55}
+#mode.now{background:#5a2320;color:#ffb3a0;box-shadow:0 0 30px #e0675a55}
+#seg{display:flex;padding:4px;gap:4px;border-radius:24px}
+#seg button{border:0;border-radius:20px;padding:7px 14px;background:transparent;color:var(--mute);font:inherit;font-weight:700;cursor:pointer}
+#seg button.on#vnow{background:#5a2320;color:#ffd0c4}#seg button.on#vtyn{background:#18553a;color:#c8ffe2}
+#clock{margin-left:auto;padding:7px 12px;font-variant-numeric:tabular-nums}
+#src{font-size:12px;color:var(--good);padding:0 4px}
+#gauges{top:70px;left:16px;display:flex;gap:10px;flex-wrap:wrap}
+.g{padding:10px 14px;min-width:120px}.g b{display:block;font-size:26px;line-height:1.1;font-variant-numeric:tabular-nums}.g span{font-size:12px;color:var(--mute)}
+body[data-view=now] .g.co2 b{color:var(--bad)}body[data-view=tynys] .g.ren b{color:var(--good)}
+#kpi{right:16px;top:70px;padding:12px 14px;width:330px}
+#kpi h3{margin:0 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--mute)}
+#kpi table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}#kpi td,#kpi th{padding:4px 2px;text-align:right}#kpi td:first-child{text-align:left;color:var(--mute)}
+#kpi small{display:block;font-size:11px}
+#why{left:16px;bottom:16px;max-width:600px;padding:12px 16px;font-size:15px}
+#ctrl{right:16px;bottom:16px;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;max-width:560px}
+.btn{background:rgba(26,40,56,.92);color:var(--ink);border:1px solid #3d5a78;border-radius:10px;padding:9px 14px;cursor:pointer;font:inherit;text-decoration:none;font-weight:600}
+.btn:hover{border-color:var(--good)}.btn.primary{background:#18553a;border-color:#2f9a66}
+#caption{left:50%;top:15%;transform:translateX(-50%) translateY(10px);font-size:32px;font-weight:800;text-align:center;width:min(900px,calc(100% - 32px));text-shadow:0 2px 16px #000,0 0 3px #000;opacity:0;transition:all .8s;pointer-events:none}
+#caption.show{opacity:1;transform:translateX(-50%)}
+#caption small{display:block;font-size:19px;font-weight:500;color:#f0f5f9;margin-top:10px;line-height:1.45}
+#dots{left:50%;transform:translateX(-50%);bottom:92px;display:flex;gap:8px;pointer-events:none}
+#dots i{width:9px;height:9px;border-radius:50%;background:#ffffff44}#dots i.on.now{background:var(--bad)}#dots i.on.tynys{background:var(--good)}#dots i.on{transform:scale(1.4)}
+.lbl{color:#fff;font-size:12px;background:rgba(10,16,24,.72);border:1px solid rgba(140,180,220,.3);padding:3px 8px;border-radius:7px;white-space:nowrap;text-align:center;line-height:1.3;font-variant-numeric:tabular-nums}
+.lbl b{display:block;color:#a4f7cb}
+.lbl .bad{color:var(--bad)}
+.mini-bar{height:4px;margin-top:4px;background:#ffffff24;border-radius:3px;overflow:hidden;min-width:64px}.mini-bar>i{height:100%;display:block;background:#65d8a1;transition:width .35s}.mini-bar[data-warning=true]>i{background:#ff8a6b}
+.mini-bar[data-caution=true]>i{background:#f3bd64}
+.mini-bar[data-status=unavailable]{outline:1px solid #ff8a6b80;background:#ff8a6b66}.mini-bar[data-status=unavailable]>i{background:#ff8a6b}
+.lbl[data-object=plant]{max-width:225px;white-space:normal}
+.event-badge{display:block;color:#ffd09b;font-size:10px;margin-top:3px}.lbl.event-on{border-color:#ffae57;background:#382519e8}.lbl.selected{border-color:#83e7ff;box-shadow:0 0 0 2px #83e7ff66}
+#source-line{position:fixed;left:18px;top:146px;z-index:6;font-size:11px;color:#dbe6ee;background:rgba(12,20,30,.78);border:1px solid rgba(140,180,220,.22);border-radius:8px;padding:3px 9px;max-width:620px}
+.lbl[hidden]{display:none!important}
+#scenario-banner{top:174px;left:358px;max-width:410px;max-height:180px;overflow:auto;padding:9px 12px;border-color:#d89a53;font-size:12px}
+#scenario-banner[hidden],#selection-panel[hidden]{display:none}#scenario-launch{top:208px;left:16px;width:300px;padding:10px 12px}#scenario-launch h3{font-size:12px;margin:0 0 7px;color:#ffd09b}.scenario-buttons{display:grid;grid-template-columns:1fr 1fr;gap:5px}.scenario-buttons button{background:#182d3b;border:1px solid #3d5a78;border-radius:7px;padding:6px 7px;color:var(--ink);font:inherit;font-size:11px;cursor:pointer}.scenario-buttons button:hover{border-color:#ffae57}.scenario-buttons button:disabled{opacity:.45;cursor:not-allowed}.scenario-controls{display:grid;grid-template-columns:1fr 1fr;gap:4px 8px;margin-top:7px}.scenario-controls label{display:flex;justify-content:space-between;align-items:center;gap:5px;color:var(--mute);font-size:10px}.scenario-controls input,.scenario-controls select{width:72px;min-width:0;background:#101d29;color:var(--ink);border:1px solid #3d5a78;border-radius:4px;padding:2px 4px;font:inherit}#scenario-feedback{font-size:10px;color:var(--mute);margin-top:6px;min-height:1.2em}.scenario-row{display:flex;align-items:center;gap:8px;margin:4px 0}.scenario-row span{flex:1}.scenario-cancel{background:none;border:1px solid #b98a50;color:#ffdaaa;border-radius:5px;padding:3px 7px;cursor:pointer}.scenario-cancel:disabled{opacity:.45;cursor:default}#scenario-note{color:#bac5ce;font-size:10px}
+#selection-panel{right:16px;top:310px;width:292px;max-height:calc(100vh - 430px);overflow:auto;padding:12px 14px;border-color:#65bdd4}#selection-panel h3{margin:0 30px 4px 0;font-size:15px}#selection-close{position:absolute;right:9px;top:8px;background:none;border:0;color:#aac6d8;font-size:22px;cursor:pointer}#selection-values{display:grid;grid-template-columns:1fr auto;gap:5px 12px;font-size:12px}#selection-values dt{color:#adc2d0}#selection-values dd{margin:0;text-align:right;max-width:160px;overflow-wrap:anywhere}#selection-source{font-size:10px;color:#a9bccb;margin:4px 0 8px}
+#lighting{right:16px;bottom:118px;display:flex;align-items:center;gap:8px;padding:7px 11px;font-size:11px}#light-hour{width:120px;accent-color:#71ccbc}#light-auto{border:1px solid #4e6c83;background:#162b3b;color:#c7dce8;border-radius:5px;padding:3px 6px;cursor:pointer}#light-auto.on{border-color:#65d8a1;color:#96e9bb}#light-value{min-width:99px;font-variant-numeric:tabular-nums;white-space:nowrap}
+#compass{position:fixed;right:21px;top:256px;width:40px;height:40px;z-index:5;border:1px solid #6c8b9e75;border-radius:50%;background:#0c1827c9;text-align:center;font-size:11px;pointer-events:none}#compass-arrow{display:block;transform-origin:50% 20px;color:#dbe8ec;line-height:16px;padding-top:2px}#compass-arrow:after{content:'▲';display:block;font-size:13px;color:#ffac82}
+/* заставка */
+#intro{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 40%,rgba(10,18,28,.55),rgba(5,9,14,.92));transition:opacity .9s;padding:16px;box-sizing:border-box}
+#intro.hide{opacity:0;pointer-events:none}
+#intro .card{max-width:980px;width:100%}
+#intro h1{font-size:46px;margin:0 0 6px;letter-spacing:-.01em}#intro h1 span{color:var(--good)}
+#intro .lead{font-size:19px;color:#d6e2ec;margin:0 0 22px}
+.pr{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:22px}
+.pr>div{padding:18px 20px}
+.pr h2{margin:0 0 8px;font-size:15px;text-transform:uppercase;letter-spacing:.1em}
+.pr .big{font-size:34px;font-weight:800;line-height:1.1}.pr p{margin:8px 0 0;color:#d6e2ec;font-size:15px}
+#intro .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+#intro .btn{font-size:17px;padding:12px 20px}
+#intro .fine{color:var(--mute);font-size:12px;margin-top:14px}
+@media(max-width:900px){#kpi{display:none}#gauges{top:auto;bottom:150px}.g{min-width:0;padding:8px 10px}.g b{font-size:19px}#why{max-width:calc(100% - 32px);bottom:70px;font-size:13px}#caption{font-size:22px}#caption small{font-size:15px}.pr{grid-template-columns:1fr}#intro h1{font-size:30px}#brand small{display:none}}
+@media(max-width:900px){#top{display:grid;grid-template-columns:1fr auto;gap:6px;left:12px;right:12px}#brand{font-size:15px;padding:7px 10px}#seg button{font-size:11px;padding:6px 10px}#mode{grid-column:1/-1;font-size:11px;padding:7px 10px}#clock{grid-column:1/-1;padding:4px 8px;font-size:11px}#source-line{top:140px;left:14px;max-width:calc(100% - 28px);font-size:9px}#scenario-banner{top:205px;left:12px;max-width:calc(100% - 50px);max-height:155px;overflow:auto}#scenario-launch{top:370px;left:12px;width:min(250px,calc(100% - 24px))}#lighting{top:165px;bottom:auto;left:12px;right:12px;justify-content:space-between;gap:4px;padding:6px;font-size:9px}#light-hour{width:65px;min-width:40px}#light-value{min-width:82px}#light-auto{max-width:91px;font-size:9px}#compass{top:215px;right:13px}#selection-panel{top:375px;right:12px;max-height:220px;width:248px}#ctrl{max-width:calc(100% - 24px);right:12px;bottom:12px;gap:6px}#ctrl .btn{font-size:10px;padding:7px 8px}#why{left:12px;bottom:86px;max-width:calc(100% - 58px);max-height:58px;overflow:auto;font-size:11px}#gauges{left:12px;right:12px;bottom:164px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.g{min-width:0;padding:7px 8px}.g b{font-size:18px}.g span{display:block;font-size:9px}#caption{top:30%}.lbl{font-size:10px;padding:3px 5px}}
+</style>
+<script type="importmap">{"imports":{"three":"./vendor/three.module.js"}}</script>
+</head>
+<body data-view="tynys">
+<canvas id="c"></canvas>
+
+<div class="hud" id="top">
+  <div class="glass" id="brand">Тыныс 3D<small>рудник Актогай · цифровой двойник на OpenEgiz</small></div>
+  <div class="glass" id="seg"><button id="vnow">Как сейчас</button><button id="vtyn" class="on">С «Тыныс»</button></div>
+  <div id="mode">—</div>
+  <div class="glass" id="clock">—</div>
+</div>
+<div class="hud" id="gauges">
+  <div class="glass g co2"><b id="g-co2">—</b><span>т CO₂ в час из угольной сети</span></div>
+  <div class="glass g ren"><b><span id="g-ren" style="font-size:inherit;color:inherit">—</span> %</b><span>энергии от ветра и солнца</span></div>
+  <div class="glass g"><b id="g-cur">—</b><span>МВт ветра и солнца выбрасывается</span></div>
+</div>
+<div class="hud glass" id="kpi"><h3>С начала работы · та же погода и руда</h3><table><tbody id="kt"></tbody></table><div id="src"></div></div>
+<div id="source-line" aria-live="polite">Подключение к двойникам…</div>
+<div class="hud glass" id="scenario-launch" aria-label="Запуск сценария"><h3>Запустить «что если» · параметры</h3><div class="scenario-buttons"><button data-scenario="lull">Штиль</button><button data-scenario="line_trip">Авария линии</button><button data-scenario="kegoc">Ограничение KEGOC</button><button data-scenario="hard_ore">Твёрдая руда</button><button data-scenario="plan_up">План +10 %</button><button data-scenario="bess_fault">Отказ накопителя</button><button data-scenario="truck_failure">Поломка самосвала</button><button data-scenario="excavator_failure">Поломка экскаватора</button><button data-scenario="grade_drop">Падение содержания</button><button data-scenario="tariff_change">Смена тарифа</button></div><div class="scenario-controls"><label>Длительность, ч <input id="scenario-duration" type="number" min="1" max="72" value="12"></label><label>Линия <select id="scenario-line"><option value="1">1</option><option value="2" selected>2</option></select></label><label>KEGOC, МВт <input id="scenario-kegoc-mw" type="number" min="1" max="200" value="80"></label><label>Потеря флота, % <input id="scenario-loss-pct" type="number" min="1" max="100" value="30"></label><label>Руда, −% <input id="scenario-grade-pct" type="number" min="1" max="90" value="10"></label><label>Тариф, +% <input id="scenario-tariff-pct" type="number" min="-90" max="300" value="20"></label><label>План, множитель <input id="scenario-plan-pct" type="number" min="1" max="2" step="0.01" value="1.10"></label></div><div id="scenario-feedback">Управление через Ditto</div></div>
+<div class="hud glass" id="scenario-banner" hidden><div id="scenario-list"></div><div id="scenario-note"></div></div>
+<aside class="hud glass" id="selection-panel" hidden aria-live="polite"><button id="selection-close" aria-label="Закрыть информацию">×</button><h3 id="selection-name"></h3><div id="selection-source"></div><dl id="selection-values"></dl></aside>
+<div class="hud glass" id="lighting"><label for="light-hour">Освещение</label><input id="light-hour" type="range" min="0" max="23.99" value="9" step="0.25"><output id="light-value" for="light-hour">09:00 · просмотр</output><button id="light-auto" title="Следовать модельному времени">По времени модели</button></div>
+<div id="compass" aria-label="Компас: север"><span id="compass-arrow">С</span></div>
+<div class="hud glass" id="why"><div id="whyt">—</div></div>
+<div class="hud" id="caption"></div>
+<div class="hud" id="dots"></div>
+<div class="hud" id="ctrl"><button class="btn primary" id="tour">▶ История: проблема → решение</button><button class="btn" id="reset">Камера на место</button><a class="btn" href="./" id="to-unity">Unity · главная →</a><a class="btn" href="futures.html">Два будущих →</a><a class="btn" href="./dashboard.html" id="to2d">Схема и «что если» →</a></div>
+
+<div id="intro">
+  <div class="card">
+    <h1>Рудник, который <span>дышит</span></h1>
+    <p class="lead">Цифровой двойник реального медного рудника Актогай (KAZ Minerals, область Абай) на платформе OpenEgiz.</p>
+    <div class="pr">
+      <div class="glass" style="border-color:#7a3a30"><h2 class="bad">Проблема</h2><div class="big">≈ 1,6 млн т CO₂</div>
+        <p>в год: рудник круглосуточно берёт ≈ 230 МВт из сети, где 66 % — уголь. Ветер и солнце непостоянны, и рудник, работающий «ровно», не может их использовать — энергию сбрасывают.</p></div>
+      <div class="glass" style="border-color:#2f7a55"><h2 class="good">Отдельный вклад «Тыныс»</h2><div class="big">−4,4 % CO₂</div>
+        <p>Для сравнения: −41 % CO₂ даёт сценарий ВЭС 300 МВт + СЭС 250 МВт без координатора. Координатор с целью «CO₂» даёт ещё −4,4 % (978 → 935 тыс. т/год, с учётом запасов), почти вдвое меньший сброс ветра и солнца и медь −1 %. Это как ≈ 90 МВт дополнительных ветряков. Цель «медь»: +0,9 % меди, но CO₂ +2,3 %. Это разные цели, а не гарантия снижения выбросов в каждом периоде.</p></div>
+    </div>
+    <div class="row"><button class="btn primary" id="go">▶ Смотреть историю (1 мин)</button><button class="btn" id="skip">Сразу к руднику</button></div>
+    <div class="fine">Мышь: вращать · колесо: приближать · пробел/→ в истории: дальше. Проценты — предрасчёт sizing.py на той же модели, что стенд (год погоды 2024, 4 сезона × 14 суток). Цифры: KAZ Minerals 2024, погода Open‑Meteo ERA5 2024, модель команды «Суперкрошки».</div>
+  </div>
+</div>
+<noscript><p style="padding:20px">Для 3D‑сцены нужен JavaScript и WebGL.</p></noscript>
+<script>
+  // если WebGL нет — честно говорим и ведём на 2D‑схему
+  (function(){try{var c=document.createElement('canvas');if(!(c.getContext('webgl2')||c.getContext('webgl')))throw 0}catch(e){document.body.innerHTML='<div style="padding:24px;font:16px system-ui;color:#eee">Браузер не поддерживает WebGL. Откройте <a style="color:#5fe3a1" href="./dashboard.html">2D‑схему рудника</a>.</div>'}})();
+</script>
+<script type="module" src="scene3d.js?v=contest-sync-20261023"></script>
+<script src="demo.js"></script>
+</body>
+</html>

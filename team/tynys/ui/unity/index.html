@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Тыныс · Unity LIVE</title>
+  <style>
+    *{box-sizing:border-box}html,body{width:100%;height:100%;margin:0;overflow:hidden;background:#0c1822;color:#edf4f3;font:16px system-ui,sans-serif}
+    #unity-canvas{width:100%;height:100%;display:block;outline:none}
+    #loading{position:absolute;inset:0;display:grid;place-content:center;gap:16px;padding:24px;background:#0c1822;text-align:center}
+    #loading[hidden]{display:none}h1{font-size:26px;margin:0}p{max-width:580px;line-height:1.5;margin:0;color:#b5cbd1}
+    progress{width:min(560px,85vw);height:8px;accent-color:#66dfcb}a{color:#66dfcb}button{padding:12px 20px;border:1px solid #66dfcb;background:#142630;border-radius:8px;color:#edf4f3;cursor:pointer}
+  </style>
+</head>
+<body>
+  <canvas id="unity-canvas" width="1600" height="900" tabindex="0" aria-label="Трёхмерная сцена рудника Тыныс, управление мышью"></canvas>
+  <div id="loading" role="status" aria-live="polite">
+    <h1>Тыныс · Unity LIVE</h1><p id="message">Загружаем трёхмерную сцену. Затем подключимся к модели проекта.</p>
+    <progress id="progress" value="0" max="1"></progress>
+    <p><a href="/dashboard.html" target="_top">Пульт диспетчера</a> · <a href="/futures.html" target="_top">Два будущих</a> · <a href="/3d.html" target="_top">Лёгкая 3D-сцена</a></p>
+    <button id="retry" hidden onclick="location.reload()">Повторить загрузку</button>
+  </div>
+  <script>
+    const loading=document.getElementById('loading'), progress=document.getElementById('progress'), message=document.getElementById('message');
+    function report(state,value=0,detail='') {
+      window.tynysRuntime={state,progress:value,message:detail};
+      parent.postMessage({type:'tynys-unity',state,progress:value,message:detail},location.origin);
+    }
+    function fail(detail) {
+      loading.hidden=false;message.textContent='Сцена не загрузилась: '+String(detail);progress.hidden=true;document.getElementById('retry').hidden=false;
+      report('error',0,String(detail));
+    }
+    report('loading',0);
+    // A temporary context identifies known software renderers without changing the Unity context.
+    window.tynysSoftwareRenderer=false;
+    try {
+      const probe=document.createElement('canvas'), gl=probe.getContext('webgl2')||probe.getContext('webgl');
+      if(gl){const info=gl.getExtension('WEBGL_debug_renderer_info');
+        const renderer=info?gl.getParameter(info.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER);
+        window.tynysSoftwareRenderer=/swiftshader|llvmpipe|softpipe|software|microsoft basic render/i.test(renderer);
+        gl.getExtension('WEBGL_lose_context')?.loseContext();}
+    }catch(error){console.warn('Renderer detection unavailable',error)}
+    const loader=document.createElement('script');loader.src='Build/Tynys.loader.js';
+    loader.onerror=()=>fail('Не удалось получить загрузчик Unity.');
+    loader.onload=()=>createUnityInstance(document.getElementById('unity-canvas'),{
+      dataUrl:'Build/Tynys.data', frameworkUrl:'Build/Tynys.framework.js', codeUrl:'Build/Tynys.wasm',
+      streamingAssetsUrl:'StreamingAssets', companyName:"Tynys",
+      productName:"Тыныс · Актогай", productVersion:"1.0",
+      devicePixelRatio:window.tynysSoftwareRenderer?0.9:Math.min(window.devicePixelRatio||1,1.5),
+      showBanner:(text,type)=>{if(type==='error')fail(text);else console.warn(text)}
+    },value=>{progress.value=value;report('loading',value)}).then(instance=>{
+      window.unityInstance=instance;loading.hidden=true;report('ready',1); // Runtime ready is not a LIVE-data claim.
+      document.getElementById('unity-canvas').focus();
+    }).catch(fail);
+    document.body.appendChild(loader);
+    document.getElementById('unity-canvas').addEventListener('contextmenu',event=>event.preventDefault());
+  </script>
+</body>
+</html>

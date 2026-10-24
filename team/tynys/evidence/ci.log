@@ -1,0 +1,30 @@
+CPU(s):                                  2
+               total        used        free      shared  buff/cache   available
+Mem:               7           0           4           0           2           6
+Description:	Ubuntu 24.04.5 LTS
+Docker version 28.0.4, build b8034c0
+Docker Compose version v2.38.2
+
+Credentials live in deploy/compose/.env. Check everything with: make smoke
+STAND OK: 17 UI assets match; live CO2 for V0/V1/V2; 100 sizing rows match
+SMOKE OK: модельный час 10, координатор решил час 10, источник решений "coordinator"
+Тыныс запущен: экран рудника -> http://localhost:8095  ·  Grafana -> Dashboards -> Тыныс · Актогай
+Время запуска по README: 201 с
+line_trip          Δмедь=-305.54 т; ΔCO₂=-1542.52 т
+kegoc              Δмедь=+165.19 т; ΔCO₂=-979.77 т
+plan_up            Δмедь=-8.71 т; ΔCO₂=+63.68 т
+truck_failure      Δмедь=+85.88 т; ΔCO₂=-499.66 т
+excavator_failure  Δмедь=+70.43 т; ΔCO₂=-424.25 т
+grade_drop         Δмедь=-140.79 т; ΔCO₂=+0.00 т
+tariff_change      Δмедь=+0.00 т; ΔCO₂=+0.00 т
+SCENARIO EFFECTS OK
+line_trip   принят=True след_в_двойниках=True отменён=True
+kegoc       принят=True след_в_двойниках=True отменён=True
+bess_fault  принят=True след_в_двойниках=True отменён=True
+hard_ore    принят=True след_в_двойниках=True отменён=True
+plan_up     принят=True след_в_двойниках=True отменён=True
+lull        принят=True след_в_двойниках=True отменён=True
+WHATIF OK
+{"status": "PASS", "mode": "functional", "functional_status": "PASS", "performance_gated": false, "meets_threshold": false, "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)", "median_fps": 0.0, "p10_fps": 0.0, "min_fps": 0, "draw_calls": {"min": 108, "median": 108, "max": 108}, "triangles": {"min": 64676, "median": 64676, "max": 64676}, "source": "● живые двойники OpenEgiz", "report": "screen3d.json", "failure": null}
+3D FUNCTIONAL OK
+commit 364cd496f84e38a29ea33b557064ba167d9064d2 · run 40112160432

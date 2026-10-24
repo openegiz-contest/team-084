@@ -1,0 +1,17 @@
+name: fetch-data
+# Скачивает реальную почасовую погоду в точке Актогая (Open-Meteo ERA5, CC BY 4.0)
+# и кладёт её в ветку data-weather (затем её сливают в main).
+on: workflow_dispatch
+permissions:
+  contents: write
+jobs:
+  fetch:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          mkdir -p team/tynys/data
+          curl -fsS "https://archive-api.open-meteo.com/v1/archive?latitude=46.95&longitude=79.86&start_date=2024-01-01&end_date=2024-12-31&hourly=wind_speed_100m,shortwave_radiation,temperature_2m&wind_speed_unit=ms&timezone=GMT&format=csv" -o team/tynys/data/openmeteo_aktogay_2024.csv
+          wc -l team/tynys/data/openmeteo_aktogay_2024.csv
+          git config user.name github-actions; git config user.email github-actions@users.noreply.github.com
+          git checkout -b data-weather; git add team/tynys/data; git commit -m "Данные: погода Актогая 2024 (Open-Meteo ERA5, CC BY 4.0)"; git push -f origin data-weather

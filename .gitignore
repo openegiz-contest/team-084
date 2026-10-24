@@ -19,6 +19,7 @@ examples/ar-lamp/https_server.log
 deploy/compose/.env
 # Set by `make example-mine`: compose commands then include the mine overlay
 deploy/compose/.example-mine
+deploy/compose/.tynys
 
 __pycache__/
 *.pyc
@@ -28,3 +29,13 @@ build/WebGL Build.loader.js
 build/WebGL Build.framework.js
 build/WebGL Build.data
 build/WebGL Build.wasm
+__pycache__/
+*.pyc
+team/tynys/results/
+.futures-test-output/
+.scene-test-output/
+.scene-performance-output/
+.dashboard-test-output/
+.unity-test-output/
+futures-e2e-report.json
+team/tynys/data/sizing_part_*.csv

@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0c1722">
+  <title>Два будущих рудника · Тыныс</title>
+  <link rel="stylesheet" href="./futures.css">
+  <script type="importmap">{"imports":{"three":"./vendor/three.module.js"}}</script>
+  <script type="module" src="./futures.js"></script>
+</head>
+<body>
+  <a class="skip" href="#main">Перейти к результатам</a>
+  <header class="topbar">
+    <a class="brand" href="./" aria-label="Тыныс: главная"><span class="brand-mark" aria-hidden="true">Т</span><span>ТЫНЫС <small>АКТОГАЙ / OPENEGIZ</small></span></a>
+    <nav aria-label="Разделы"><a href="./">Unity · главная</a><a href="./dashboard.html">Пульт рудника</a><a href="./3d.html">Обзор 3D</a><a href="./futures.html" aria-current="page">Два будущих</a></nav>
+    <div class="connection" id="connection" data-state="connecting"><i aria-hidden="true"></i><span>Подключение к Ditto</span></div>
+  </header>
+
+  <div class="page">
+    <section class="hero" aria-labelledby="page-title">
+      <div><p class="eyebrow">ЛАБОРАТОРИЯ РЕШЕНИЙ · 01—04</p><h1 id="page-title">Два будущих <em>рудника.</em></h1><p class="lead">Одно исходное состояние. Одинаковая погода и сбои.<br>Проверьте обещание энергосистеме — и его последствия завтра.</p></div>
+      <div class="hero-note"><span class="small-label">ЧТО МЫ ПРОВЕРЯЕМ</span><p>Сможет ли рудник жить<br>с меньшим лимитом сети?</p><span>План «Тыныс» не обязан победить.<br>Результат определяет расчёт.</span></div>
+    </section>
+
+    <div class="workspace">
+      <aside class="request-panel panel" aria-labelledby="request-title">
+        <div class="section-label"><span>01 / ЗАДАЙТЕ УСЛОВИЯ</span><span class="tiny-badge">WHAT IF</span></div>
+        <h2 id="request-title">Запрос энергосистемы</h2>
+        <p class="hint">Меняем верхнюю границу потребления. Фактическое снижение измеряем отдельно.</p>
+        <form id="request-form">
+          <label class="field-label" for="reduction">Снижение лимита <span>МВт</span></label>
+          <div class="range-value"><input id="reduction" name="reduction_mw" type="number" min="0" max="200" step="5" value="80" required inputmode="decimal"><span>МВт</span></div>
+          <input id="reduction-range" type="range" min="0" max="200" step="5" value="80" aria-label="Снижение лимита сети, МВт">
+          <div class="range-labels"><span>0</span><span>200 МВт</span></div>
+          <div class="field-grid">
+            <div><label class="field-label" for="duration">Ограничение, ч</label><input id="duration" name="duration_h" type="number" min="1" max="12" step="1" value="4" required></div>
+            <div><label class="field-label" for="lead">Подготовка, ч</label><input id="lead" name="lead_h" type="number" min="0" max="6" step="1" value="2" required></div>
+            <div><label class="field-label" for="recovery">После события, ч</label><input id="recovery" name="recovery_h" type="number" min="24" max="48" step="1" value="24" required></div>
+            <div><label class="field-label" for="loss">Потеря меди, %</label><input id="loss" name="max_copper_loss_pct" type="number" min="0" max="10" step="0.5" value="2" required></div>
+          </div>
+          <fieldset><legend>Усложнить условия</legend>
+            <label class="toggle"><input id="lull" type="checkbox"><span><strong>Штиль</strong><small>24 ч: ветер до 8 % исходного</small></span><i aria-hidden="true"></i></label>
+            <label class="toggle"><input id="bess-fault" type="checkbox"><span><strong>Отказ накопителя</strong><small>BESS недоступен на 12 часов</small></span><i aria-hidden="true"></i></label>
+            <label class="toggle"><input id="hard-ore" type="checkbox"><span><strong>Твёрдая руда</strong><small>72 ч: доля +30 п. п., не выше 95 %</small></span><i aria-hidden="true"></i></label>
+          </fieldset>
+          <div class="presets" aria-label="Быстрые сценарии"><button type="button" data-preset="base">80 МВт · 4 ч</button><button type="button" data-preset="longer">Ещё +2 ч</button><button type="button" data-preset="fault">Без BESS</button></div>
+          <button class="button primary" id="submit" type="submit"><span>Проверить обещание</span><span aria-hidden="true">↗</span></button>
+          <button class="button secondary" id="boundary" type="button"><span>Найти предел</span><span aria-hidden="true">⌁</span></button>
+          <div class="action-row"><button class="text-button" id="cancel" type="button" disabled>Отменить расчёт</button><button class="text-button" id="reset" type="button">Сбросить условия</button></div>
+          <div class="request-status" id="request-status" role="status" aria-live="polite">Выберите условия и запустите расчёт.</div>
+          <progress id="progress" max="100" value="0" hidden aria-label="Прогресс расчёта"></progress>
+        </form>
+        <div class="source-note"><span class="source-icon" aria-hidden="true">◇</span><p>Расчёт читает снимок рудника через Eclipse Ditto. Рабочие уставки рудника не изменяются.</p></div>
+      </aside>
+
+      <main id="main" tabindex="-1">
+        <section class="panel result-passport" aria-labelledby="verdict-title">
+          <div class="section-label"><span>02 / ПРОВЕРЯЕМОЕ ОБЕЩАНИЕ</span><span class="status-tag" id="verdict-status" data-status="idle">НЕТ РАСЧЁТА</span></div>
+          <div class="verdict-heading"><div><h2 id="verdict-title">Сначала проверим, потом пообещаем.</h2><p id="verdict-description">Система проследит за медью, энергией, складами и зарядом техники до конца восстановления.</p></div><div class="passport-number"><b id="tested-reduction">—</b><span>МВт снижения лимита<br>проверено в расчёте</span></div></div>
+          <div id="result-warning" class="result-warning" hidden></div>
+          <div class="promise-metrics"><div><span>Запрошено снижение лимита</span><b id="requested-mw">—</b></div><div><span>Фактически меньше из сети¹</span><b id="actual-mw">—</b></div><div><span>Доставлено за событие¹</span><b id="delivered-mwh">—</b></div><div><span>Потеря меди за горизонт²</span><b id="copper-loss">—</b></div></div>
+          <ol id="reasons" class="reasons"></ol>
+        </section>
+
+        <section class="futures-section" aria-labelledby="futures-title">
+          <div class="section-heading"><div><p class="section-label">ОДНО СОБЫТИЕ → ДВА ИСХОДА</p><h2 id="futures-title">Посмотрите, где меняется будущее</h2></div><button id="camera-reset" class="text-button" type="button">Сбросить камеры ↺</button></div>
+          <div class="scenes">
+            <article class="scene-card baseline"><header><span class="variant-dot"></span><div><h3>Обычное управление</h3><p>Те же ограничения и начальные запасы</p></div><span class="variant-code">A</span></header><div class="scene" id="scene-baseline" role="img" aria-label="Рудник при обычном управлении"><div class="scene-loading">Подготовка схемы рудника…</div></div><div class="scene-stats"><div><span>Из сети</span><b id="baseline-grid">—</b></div><div><span>Медь / шаг</span><b id="baseline-cu">—</b></div><div><span>Накопитель</span><b id="baseline-bess">—</b></div></div><div class="scene-explanation" id="baseline-explanation">После расчёта здесь появится причина текущего действия.</div></article>
+            <article class="scene-card tynys"><header><span class="variant-dot"></span><div><h3>С планом «Тыныс»</h3><p>Подготовка, событие, восстановление</p></div><span class="variant-code">B</span></header><div class="scene" id="scene-tynys" role="img" aria-label="Рудник с планом Тыныс"><div class="scene-loading">Подготовка схемы рудника…</div></div><div class="scene-stats"><div><span>Из сети</span><b id="tynys-grid">—</b></div><div><span>Медь / шаг</span><b id="tynys-cu">—</b></div><div><span>Накопитель</span><b id="tynys-bess">—</b></div></div><div class="scene-explanation" id="tynys-explanation">Каждая подпись привязана к рассчитанному состоянию.</div></article>
+          </div>
+          <p class="scene-method">Движение иллюстрирует выбранный час; геометрия схематическая. Камеры синхронизированы.</p>
+          <div class="timeline panel"><div class="timeline-head"><button id="play" class="play" type="button" disabled aria-label="Воспроизвести расчёт">▶</button><div class="frame-time"><strong id="frame-hour">Час —</strong><span id="frame-phase">Ожидаем расчёт</span></div><div class="timeline-legend"><span><i class="prep"></i>Подготовка</span><span><i class="event"></i>Ограничение</span><span><i class="recover"></i>Восстановление</span></div><label class="speed">Скорость <select id="speed" aria-label="Скорость воспроизведения"><option value="1">1×</option><option value="2">2×</option><option value="4">4×</option></select></label></div><label class="sr-only" for="timeline">Общее время для двух рудников</label><input id="timeline" type="range" min="0" max="0" step="1" value="0" disabled><div class="timeline-extents"><span id="timeline-start">Начало</span><span id="timeline-caption">Перемещайте ползунок — сравнивайте один и тот же час.</span><span id="timeline-end">Конец</span></div></div>
+        </section>
+
+        <section class="panel chart-panel" aria-labelledby="chart-title">
+          <div class="section-heading"><div><p class="section-label">СЛЕД РЕШЕНИЯ</p><h2 id="chart-title">Что произошло за всё время</h2></div><label class="sr-only" for="chart-metric">Показатель графика</label><select id="chart-metric"><option value="grid_mw">Потребление сети · МВт</option><option value="cumulative_cu_t">Накопленная медь · т</option><option value="bess_mwh">Энергия BESS · МВт·ч</option><option value="fleet_mwh">Заряд техники · МВт·ч</option><option value="pile_soft_t">Склад мягкой руды · т</option><option value="pile_hard_t">Склад твёрдой руды · т</option></select></div>
+          <div class="chart-legend"><span><i class="baseline-line"></i>Обычное управление</span><span><i class="tynys-line"></i>Тыныс</span><span><i class="event-area"></i>Период ограничения</span></div>
+          <svg id="chart" viewBox="0 0 900 230" role="img" aria-label="График показателей двух сценариев"><text x="450" y="115" text-anchor="middle" class="chart-empty">График появится после расчёта</text></svg>
+        </section>
+
+        <section class="panel recovery-panel" aria-labelledby="recovery-title">
+          <div class="section-label">03 / ЦЕНА ПОМОЩИ ЗАВТРА</div><h2 id="recovery-title">Ограничение закончилось. Долги — тоже?</h2><p class="hint">Сравниваем с тем же рудником без дополнительного ограничения. Энергия в батареях и руда на складе не считаются добытой медью.</p>
+          <div class="recovery-metrics"><div><span>Восстановление запасов</span><b id="recovered-at">—</b><small id="recovery-detail">Проверяется после события</small></div><div><span>Долг по меди в конце²</span><b id="cu-debt">—</b><small>Отставание от варианта без запроса</small></div><div><span>Дополнительная энергия после¹</span><b id="energy-rebound">—</b><small>Разница с вариантом без запроса</small></div></div>
+          <p id="recovery-balances" class="hint">Долг энергии накопителя, техники и добычи появится после расчёта.</p>
+          <div class="table-wrap"><table><caption class="sr-only">Итоги на одном горизонте расчёта</caption><thead><tr><th scope="col">За весь горизонт</th><th scope="col"><span class="baseline-text">Обычное управление</span></th><th scope="col"><span class="tynys-text">Тыныс</span></th><th scope="col">Без запроса¹</th></tr></thead><tbody id="comparison"><tr><td colspan="4" class="table-empty">Итоги появятся после расчёта.</td></tr></tbody></table></div>
+        </section>
+
+        <section class="panel boundary-panel" aria-labelledby="boundary-title">
+          <div class="section-label">04 / НАЙДИТЕ ПРЕДЕЛ</div><h2 id="boundary-title">Граница возможностей, а не обещание на глаз</h2><p class="hint" id="boundary-hint">Нажмите «Найти предел»: расчёт проверит ограничения на 1, 2, 4, 6, 8 и 12 часов при выбранном снижении лимита, погоде и сбоях.</p><div id="boundary-grid" class="boundary-grid"><div class="empty-boundary"><span aria-hidden="true">⌁</span>Не все запросы выполнимы. Здесь появится проверенная граница.</div></div>
+        </section>
+
+        <footer class="evidence panel"><div><p class="section-label">ВОСПРОИЗВОДИМОСТЬ И ГРАНИЦЫ</p><p id="snapshot-info">Снимок ещё не получен.</p><p class="fine">¹ Относительно справочного прогона без дополнительного запроса, при тех же исходных данных и сбоях. Снижение лимита само по себе не означает поставленную мощность.<br>² Выпуск меди за полный горизонт, включая восстановление. Это сценарный расчёт модели, а не гарантия работы реального предприятия.</p></div><button id="export" class="button secondary" type="button" disabled>Скачать расчёт .json ↓</button></footer>
+      </main>
+    </div>
+  </div>
+  <noscript><p class="noscript">Для расчёта и просмотра результатов включите JavaScript.</p></noscript>
+  <script src="demo.js"></script>
+</body>
+</html>

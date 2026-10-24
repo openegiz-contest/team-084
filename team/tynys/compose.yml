@@ -1,0 +1,121 @@
+# Рудник «Тыныс» (Актогай): надстройка над deploy/compose/docker-compose.yml.
+# Запускается командой `make tynys` из корня репозитория.
+services:
+  # A bounded report holds three 66-hour trajectories. Ditto's default 100k
+  # Thing limit is too small; keep the report and cluster transport consistent.
+  things:
+    environment: &experiment_limits
+      LIMITS_THINGS_MAX_SIZE: "1m"
+      LIMITS_MESSAGES_MAX_SIZE: "1m"
+      REMOTE_MAX_FRAMESIZE: "2m"
+  policies:
+    environment: *experiment_limits
+  things-search:
+    environment: *experiment_limits
+  connectivity:
+    environment: *experiment_limits
+  gateway:
+    environment: *experiment_limits
+  # When adding Tynys to an existing base stand, gateway is recreated. Reload
+  # nginx too so its static upstream resolves the gateway's new container IP.
+  ditto-nginx:
+    depends_on:
+      gateway:
+        condition: service_started
+        restart: true
+
+  tynys-setup:
+    build: ../../team/tynys
+    image: tynys/aktogay:local
+    restart: "no"
+    command: ["python", "setup_twins.py"]
+    environment:
+      DITTO_URL: http://ditto-nginx:80
+      DITTO_PASSWORD: ${DITTO_PASSWORD}
+    depends_on:
+      init:
+        condition: service_completed_successfully
+
+  tynys-coordinator:
+    image: tynys/aktogay:local
+    pull_policy: never
+    restart: unless-stopped
+    mem_limit: 768m
+    command: ["python", "coordinator.py"]
+    environment: &env
+      DITTO_URL: http://ditto-nginx:80
+      DITTO_PASSWORD: ${DITTO_PASSWORD}
+      MQTT_HOST: mosquitto
+      MQTT_PORT: "1883"
+      HOUR_SECONDS: ${TYNYS_HOUR_SECONDS:-6}
+      START_HOUR: ${TYNYS_START_HOUR:-9}
+    depends_on:
+      tynys-setup:
+        condition: service_completed_successfully
+
+  tynys-field:
+    image: tynys/aktogay:local
+    pull_policy: never
+    restart: unless-stopped
+    mem_limit: 512m
+    command: ["python", "field.py"]
+    environment: *env
+    depends_on:
+      tynys-setup:
+        condition: service_completed_successfully
+
+  tynys-ui:
+    image: docker.io/library/nginx:1.25-alpine
+    restart: unless-stopped
+    mem_limit: 64m
+    environment:
+      DITTO_BASIC_AUTH: ${DITTO_BASIC_AUTH}
+      NGINX_ENVSUBST_FILTER: DITTO_
+    ports:
+      - "${OPENEGIZ_BIND:-127.0.0.1}:${TYNYS_UI_PORT:-8095}:8095"
+    volumes:
+      - ../../team/tynys/ui/index.html:/usr/share/nginx/html/index.html:ro
+      - ../../team/tynys/ui/unity-shell.css:/usr/share/nginx/html/unity-shell.css:ro
+      - ../../team/tynys/ui/unity-shell.js:/usr/share/nginx/html/unity-shell.js:ro
+      - ../../team/tynys/ui/unity:/usr/share/nginx/html/unity:ro
+      - ../../team/tynys/ui/dashboard.html:/usr/share/nginx/html/dashboard.html:ro
+      - ../../team/tynys/ui/app.js:/usr/share/nginx/html/app.js:ro
+      - ../../team/tynys/ui/demo.js:/usr/share/nginx/html/demo.js:ro
+      - ../../team/tynys/ui/3d.html:/usr/share/nginx/html/3d.html:ro
+      - ../../team/tynys/ui/scene3d.js:/usr/share/nginx/html/scene3d.js:ro
+      - ../../team/tynys/ui/scene-details.js:/usr/share/nginx/html/scene-details.js:ro
+      - ../../team/tynys/ui/futures.html:/usr/share/nginx/html/futures.html:ro
+      - ../../team/tynys/ui/futures.js:/usr/share/nginx/html/futures.js:ro
+      - ../../team/tynys/ui/futures.css:/usr/share/nginx/html/futures.css:ro
+      - ../../team/tynys/ui/future-scene.js:/usr/share/nginx/html/future-scene.js:ro
+      - ../../team/tynys/ui/vendor:/usr/share/nginx/html/vendor:ro
+      - ../../team/tynys/ui/trace.json:/usr/share/nginx/html/trace.json:ro
+      - ../../team/tynys/ui/nginx.conf.template:/etc/nginx/templates/default.conf.template:ro
+    depends_on:
+      ditto-nginx:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8095/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+
+  tynys-futures:
+    image: tynys/aktogay:local
+    pull_policy: never
+    restart: unless-stopped
+    mem_limit: 1536m
+    cpus: 2
+    command: ["python", "futures_service.py"]
+    environment:
+      <<: *env
+      OMP_NUM_THREADS: "1"
+      OPENBLAS_NUM_THREADS: "1"
+      HIGHS_THREADS: "1"
+    depends_on:
+      tynys-setup:
+        condition: service_completed_successfully
+
+  grafana:
+    volumes:
+      - ../../team/tynys/grafana/tynys.json:/var/lib/grafana/example-dashboards/tynys.json:ro

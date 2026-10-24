@@ -1,0 +1,51 @@
+name: sizing
+# Предрасчёт «Сколько строить ВЭС и СЭС» (team/tynys/sizing.py) на текущей физике.
+# Каждая пара «вариант управления × мощность ВЭС» считается на своей машине;
+# результат (CSV + JSON с параметрами) кладётся в ветку sizing-v4-<вариант>-<ВЭС>.
+# Резерв KEGOC (flex_stats.py) считается отдельной задачей в ветку flex-v4.
+on: workflow_dispatch
+permissions:
+  contents: write
+jobs:
+  run:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 300
+    strategy:
+      fail-fast: false
+      matrix:
+        variant: [V0, V2, V2green, V2fixed]
+        wind: [0, 150, 300, 450, 600]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - run: pip install -r team/tynys/requirements.txt
+      - name: sizing.py ${{ matrix.variant }} ВЭС ${{ matrix.wind }}
+        working-directory: team/tynys
+        run: >
+          PYTHONPATH=. python sizing.py ${{ matrix.variant }} --winds ${{ matrix.wind }}
+          --output data/sizing_part_${{ matrix.variant }}_${{ matrix.wind }}.csv
+      - name: Результат в ветку
+        run: |
+          git config user.name github-actions; git config user.email github-actions@users.noreply.github.com
+          b=sizing-v4-${{ matrix.variant }}-${{ matrix.wind }}
+          git checkout --orphan $b; git rm -rfq --cached .
+          git add -f team/tynys/data/sizing_part_${{ matrix.variant }}_${{ matrix.wind }}.csv team/tynys/data/sizing_part_${{ matrix.variant }}_${{ matrix.wind }}.json
+          git commit -qm "sizing ${{ matrix.variant }} ${{ matrix.wind }} ${GITHUB_SHA::7}"; git push -qf origin $b
+  flex:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - run: pip install -r team/tynys/requirements.txt
+      - name: flex_stats.py
+        working-directory: team/tynys
+        run: PYTHONPATH=. python flex_stats.py --output data/flex.csv
+      - name: Результат в ветку
+        run: |
+          git config user.name github-actions; git config user.email github-actions@users.noreply.github.com
+          git checkout --orphan flex-v4; git rm -rfq --cached .
+          git add -f team/tynys/data/flex.csv team/tynys/data/flex.json
+          git commit -qm "flex v4 ${GITHUB_SHA::7}"; git push -qf origin flex-v4

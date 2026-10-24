@@ -1,0 +1,65 @@
+name: tynys-e2e
+# Запуск решения с нуля по README в окружении, близком к окружению судьи (Ubuntu 24.04).
+permissions:
+  contents: write
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+jobs:
+  e2e:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+      - name: Инструкция README
+        run: |
+          set -o pipefail
+          { lscpu | grep '^CPU(s)'; free -g | head -2; lsb_release -d; docker --version; docker compose version; } | tee ci.log
+          start=$(date +%s)
+          sudo apt-get update && sudo apt-get install -y make
+          make tynys 2>&1 | tail -5 | tee -a ci.log
+          echo "Время запуска по README: $(( $(date +%s) - start )) с" | tee -a ci.log
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Последствия сценариев для меди и CO₂
+        run: |
+          set -o pipefail
+          python -m pip install --disable-pip-version-check numpy scipy pandas
+          PYTHONPATH=team/tynys python team/tynys/scripts/scenario_effect_check.py | tee -a ci.log
+      - name: What-if на стенде (включить → след в двойниках → отменить)
+        run: |
+          set -o pipefail
+          python3 team/tynys/scripts/whatif_check.py | tee -a ci.log
+      - name: 3D без GPU (функции)
+        if: always()
+        env:
+          TYNYS_MIN_FPS: '10'
+        run: |
+          set -o pipefail
+          pip install playwright==1.64.0 && python -m playwright install --with-deps chromium
+          python team/tynys/scripts/check3d.py http://127.0.0.1:8095/3d.html screen3d.png --mode functional --expect-source live 2>&1 | tee -a ci.log
+      - name: Снимок пульта (материал для команды)
+        if: always()
+        continue-on-error: true
+        run: python team/tynys/scripts/screenshot.py http://127.0.0.1:8095/dashboard.html screen2d.png
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tynys-ci-evidence
+          path: |
+            ci.log
+            screen3d.png
+            screen2d.png
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Журнал и снимки в ветку ci-screens (копия кладётся в main, team/tynys/evidence)
+        if: always() && github.ref == 'refs/heads/main'
+        run: |
+          echo "commit ${GITHUB_SHA} · run ${GITHUB_RUN_ID}" | tee -a ci.log
+          mkdir -p /tmp/ev && cp ci.log screen3d.png screen2d.png /tmp/ev/ 2>/dev/null || true
+          git config user.name github-actions; git config user.email github-actions@users.noreply.github.com
+          git checkout -q --orphan ci-screens; git rm -rfq --cached .
+          cp /tmp/ev/* . ; git add -f ci.log screen3d.png screen2d.png 2>/dev/null || git add -f ci.log
+          git commit -qm "evidence ${GITHUB_SHA::7}"; git push -qf origin ci-screens

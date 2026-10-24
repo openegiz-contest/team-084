@@ -1,0 +1,30 @@
+{
+  "wind_mw": 300.0,
+  "pv_mwp": 250.0,
+  "variant": "V2green",
+  "copper_tolerance_pct": 1.5,
+  "status": "ok",
+  "equivalent_wind_mw": 89.33975240715267,
+  "target_co2_kt": 934.6,
+  "target_cu_t": 216775.0,
+  "required_baseline_wind_mw": 389.3397524071527,
+  "copper_change_pct": -1.0468424687642974,
+  "grid_step_equivalent_mw": 150.0,
+  "bracket_wind_mw": [
+    300.0,
+    450.0
+  ],
+  "bracket_co2_kt": [
+    977.9,
+    905.2
+  ],
+  "bracket_cu_t": [
+    219068.3,
+    219068.3
+  ],
+  "method": "linear interpolation; fixed PV; Cu within tolerance; no extrapolation",
+  "source": "sizing.csv",
+  "csv_sha256": "722f6639ff62e9c8987e70e70b66fc1659e45aaa8eda72da6b87abcafdc8b0f8",
+  "model_version": "physics-v4-geomet-maintenance",
+  "archived": false
+}

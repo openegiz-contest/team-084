@@ -1,31 +1,51 @@
-# <Team name>: a digital mine on OpenEgiz
+# Суперкрошки: «Тыныс» — сколько ветра и солнца нужно руднику Актогай, чтобы сжигать меньше угля
 
-> Team Repository of the contest “Digital Mine on OpenEgiz”. **Replace the contents of this file with the instructions for your Submission.** The AI Jury runs the Submission strictly by these instructions, from scratch, in the Judge Environment. Accepted languages: English, Kazakh, Russian.
+Цифровой двойник реального медного рудника **Актогай** (KAZ Minerals, обл. Абай) на OpenEgiz. Рудник берёт из сети ≈ 230 МВт, а энергия Казахстана на 66 % угольная. Двойник помогает решить:
 
-> **Start with the Concept**, the first section of [SUBMISSION.md](SUBMISSION.md): the Team writes it before any code. What AI agents build from this Template without a Concept is the Default Solution, published on the [contest site](https://openegiz-contest.github.io/) as the low bar: a Submission that does not go beyond it gets low levels in the Rubric. AI agents read [AGENTS.md](AGENTS.md).
+- **руководству** — сколько ВЭС и СЭС построить (предрасчёт на той же модели, что стенд: ВЭС 300 МВт + СЭС 250 МВт уменьшают CO₂ примерно на 41 % относительно варианта без ВИЭ; координатор «Тыныс» с целью «CO₂» — ещё на 4,4 % и вдвое сокращает сброс ветра и солнца, как ≈ 89 МВт дополнительных ветряков, ценой ≈ 1 % меди);
+- **энергетику и диспетчеру** — каждый час: какую руду и как тонко молоть, когда заряжать электросамосвалы и накопитель, чтобы не выбрасывать энергию ветра и солнца;
+- **по запросу энергосистемы** — выдержит ли рудник снижение лимита сети и чего это будет стоить завтра.
 
-## Running
+Цифры модели сверены с отчётом KAZ Minerals 2024, погода — реальная (Open‑Meteo ERA5, 2024). Подробно — [SUBMISSION.md](SUBMISSION.md).
 
-Requirements (Docker, `make`, Windows/WSL2 setup) are in [OPENEGIZ.md](OPENEGIZ.md) / [OPENEGIZ.ru.md](OPENEGIZ.ru.md).
+## Запуск (Ubuntu 24.04, Docker)
 
 ```bash
-sudo apt install -y make   # if make is missing (clean Ubuntu)
-make up            # the OpenEgiz platform
-make example-mine  # the Example Mine: twins, simulator, dashboard
+sudo apt-get update && sudo apt-get install -y make
+make tynys
 ```
 
-Replace these commands with the commands of your Submission. The Submission must start by following these instructions without manual intervention (Rules, clause 6.4); downloading datasets and models and building are also listed here.
+`make tynys` поднимает платформу OpenEgiz (`make up`), собирает и запускает рудник (двойники, модель рудника, координатор, лабораторию «Два будущих», экран, дашборд) и в конце выполняет проверку `SMOKE OK`. Первый запуск — около 10–15 минут (скачивание образов). Данные скачивать не нужно: все параметры в репозитории.
 
-## What to open
+Новый запуск модели начинается в **09:00** выбранного дня. `TYNYS_START_HOUR=0 make tynys` возвращает старт в полночь. V0/V1/V2 получают одинаковое начальное состояние и погоду; итоги считаются с часа старта. Один модельный час ≈ 6 секунд.
 
-- Grafana: the address and login are printed by `make up`.
-- <where to see the mine visualization, which dashboards>
+## Что открыть — обход за 5 минут
+
+**Быстрый путь — кнопка «Демо за 3 минуты» на пульте** (http://localhost:8095/dashboard.html): реальный штиль → лёгкая 3D с остановленными лопастями и уступами, окрашенными по твёрдости GeoMet → настоящий расчёт «Двух будущих». По завершении удаляется только событие демо; на медленной машине расчёт может занять больше трёх минут, промежуточные цифры не подменяются.
+
+- **Главный экран — Unity LIVE:** http://localhost:8095 — интерактивный рудник в браузере. Готовая Release-сборка входит в репозиторий; устанавливать Unity зрителю не нужно. Сцена автоматически читает данные модели через тот же Ditto-прокси. При недоступном API показывает ожидание или последний снимок с пометкой об устаревании; иллюстративный DEMO включается только вручную. Сценарии изменяются на пульте, их последствия видны в Unity.
+- **Два будущих рудника:** http://localhost:8095/futures.html — проверить снижение лимита сети, сравнить обычное управление и «Тыныс» из одного снимка, увидеть восстановление и исследовать предел при штиле, отказе накопителя и твёрдой руде. Порядок демонстрации — [team/tynys/FUTURES.md](team/tynys/FUTURES.md).
+- **Пульт и сценарии:** http://localhost:8095/dashboard.html — схема рудника, режим «вдох/выдох», «почему так», план на 24 ч, сравнение V0/V1/V2, кнопки «Что если…».
+- **Лёгкая 3D:** http://localhost:8095/3d.html — запасной просмотр карьера, дорог, самосвалов, фабрики и энергосистемы. Ссылка доступна и во время загрузки Unity. Нажмите на оборудование или его подпись, чтобы увидеть числа из двойника. Шкалы показывают заполнение складов и заряд; активные сценарии видны на оборудовании и в баннере с отменой. Внизу справа — слайдер освещения и кнопка «По времени модели»; при открытии выбран свет 09:00. Слайдер меняет только свет, модельное время и расчёты продолжаются независимо.
+- **Исходники Unity и Windows:** [team/tynys/unity](team/tynys/unity/README.md) — редактируемая сцена для Unity 6000.3.2f1 и инструкция сборки. Windows-приложение также автоматически подключается к локальному стенду.
+- **Grafana:** адрес и пароль печатает `make up`; Dashboards → OpenEgiz Examples → «Тыныс · Актогай».
+- **Ditto:** двойники `kz.tynys:*`.
+
+Остановить: `make down`. Удалить всё: `make clean`.
+
+Пульт показывает выбранную цель и цель последнего решения рядом с накопленными итогами. В режиме «Больше меди» энергопотребление и CO₂ могут вырасти; это видно в сравнении, а не скрывается переключением цели. Текущая погода не объясняет весь накопленный период. V0 и V1 могут совпадать в отдельных состояниях. Статистика резерва отдельно показывает медианы мощности и длительности, p10–p90 и средние: эти две медианы не являются обещанием определённой мощности на указанное число часов. Если сервер не передал медиану, среднее не подставляется под её названием.
+
+Проверка Unity WebGL на живом стенде: `node team/tynys/scripts/check_unity_web.cjs http://127.0.0.1:8095` (требуется Playwright). Она проверяет получение и обновление снимков, потерю/восстановление связи и отсутствие автоматического DEMO, сохраняет кадр и фактический FPS. Это отдельный runtime от лёгкой 3D; её измерения производительности к Unity не относятся. Если браузер не справляется с Unity, пульт, аналитика и ссылка на лёгкую 3D остаются доступны.
+
+Подробности проверок и измерений лёгкой 3D — [team/tynys/TESTING.md](team/tynys/TESTING.md).
+
+После обновления `make tynys` проверяет не только доступность страницы: файлы UI и Unity должны совпадать с текущим checkout, все три варианта должны передавать CO₂ с учётом запасов, а таблица мощностей — совпадать с `data/sizing.csv`. Проверку можно повторить отдельно: `python3 team/tynys/scripts/check_stand.py`. При обновлении существующего стенда только справочные таблицы можно обновить без сброса сценариев и отчётов: `docker compose -f deploy/compose/docker-compose.yml -f team/tynys/compose.yml exec tynys-field python refresh_reference_data.py`. Сначала пересоберите образ из актуальных исходников. Перезапуск модели начинает новый период накопления итогов.
 
 ## Repository contents
 
 | Path | Contents |
 |---|---|
-| `team/` | Directory for the Team's code. Using it is optional: any part may be changed, including the platform core |
+| `team/tynys/` | Рудник «Тыныс»: модель (`tynys/`), сервисы (`services/`), экран (`ui/`), дашборд (`grafana/`), `compose.yml` |
 | `SUBMISSION.md` | Description of the Submission: **required** |
 | `presentation.pdf` | Presentation: **required**, in the repository root |
 | `AGENTS.md`, `CLAUDE.md` | Instructions for your AI agents (Codex, Claude Code and others read them automatically) |

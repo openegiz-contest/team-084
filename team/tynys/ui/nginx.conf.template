@@ -1,0 +1,33 @@
+server {
+  listen 8095;
+  root /usr/share/nginx/html;
+  # Revalidate UI files after an upgrade; old JS must not mask new telemetry.
+  add_header Cache-Control "no-cache" always;
+  # WebAssembly must keep its MIME type for streaming compilation. The build
+  # is shipped with the UI; no Unity Editor or external asset host is needed.
+  location /unity/ {
+    types {
+      text/html html;
+      text/css css;
+      application/javascript js;
+      application/json json;
+      application/wasm wasm;
+      application/octet-stream data;
+      image/png png;
+      image/svg+xml svg;
+      image/x-icon ico;
+    }
+    gzip on;
+    gzip_vary on;
+    gzip_min_length 1024;
+    gzip_types application/javascript application/wasm application/octet-stream;
+    add_header Cache-Control "no-cache";
+    try_files $uri $uri/ =404;
+  }
+  location ~ \.template$ { return 404; }
+  location /ditto/ {
+    proxy_pass http://ditto-nginx:80/;
+    proxy_set_header Authorization "Basic ${DITTO_BASIC_AUTH}";
+    proxy_http_version 1.1;
+  }
+}

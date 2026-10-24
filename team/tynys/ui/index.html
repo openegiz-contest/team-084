@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#101e2b">
+  <title>Тыныс · живой рудник</title>
+  <link rel="stylesheet" href="unity-shell.css">
+  <script src="unity-shell.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="Тыныс — главная"><span class="brand-mark" aria-hidden="true">Т</span><span>ТЫНЫС<small>АКТОГАЙ · ЦИФРОВОЙ ДВОЙНИК</small></span></a>
+    <nav aria-label="Разделы рудника">
+      <a href="/" aria-current="page">Unity · рудник</a>
+      <a href="dashboard.html">Пульт и сценарии</a>
+      <a href="futures.html">Два будущих</a>
+      <a href="3d.html">Лёгкая 3D</a>
+    </nav>
+    <button id="fullscreen" type="button" disabled>На весь экран ↗</button>
+  </header>
+  <main>
+    <div class="scene-heading"><h1>ОПЕРАЦИОННЫЙ ЦЕНТР <span> / АКТОГАЙ · ЭНЕРГИЯ · РУДА · МЕДЬ</span></h1><span id="runtime-state" role="status">Загрузка Unity</span></div>
+    <div class="stage" id="stage">
+      <iframe id="unity" title="Unity: цифровой двойник рудника Тыныс" allow="fullscreen; autoplay" allowfullscreen></iframe>
+      <section class="loading" id="loading" aria-labelledby="loading-title">
+        <div class="loading-card">
+          <p class="eyebrow">ТЫНЫС / UNITY WEB</p>
+          <h2 id="loading-title">Открываем рудник</h2>
+          <p id="loading-detail">Загружаем 3D-сцену. Затем Unity автоматически подключится к данным модели OpenEgiz.</p>
+          <progress id="progress" max="1" aria-label="Загрузка Unity"></progress>
+          <div class="loading-actions"><a href="3d.html">Открыть лёгкую 3D →</a><button id="retry" type="button" hidden>Повторить загрузку</button></div>
+          <p class="fine">Иллюстративное демо включается отдельно внутри сцены. Состояние подключения и источник чисел всегда указаны в Unity.</p>
+        </div>
+      </section>
+    </div>
+    <footer><span>Вращение — мышью · приближение — колёсиком · выбор — щелчком по объекту</span><a href="dashboard.html">Изменить сценарий на пульте →</a></footer>
+  </main>
+  <noscript><p class="noscript">Для Unity нужен JavaScript. <a href="dashboard.html">Перейти к пульту</a>.</p></noscript>
+</body>
+</html>

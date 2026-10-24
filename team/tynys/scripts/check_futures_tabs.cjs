@@ -1,0 +1,40 @@
+const {chromium} = require('playwright');
+const assert = require('assert/strict');
+const fs = require('fs');
+const path = require('path');
+const base = process.env.TYNYS_BROWSER_URL || 'http://127.0.0.1:8095/futures.html';
+const output = path.resolve(process.env.TYNYS_ARTIFACT_DIR || '.futures-test-output');
+fs.mkdirSync(output, {recursive: true});
+(async()=>{
+  const browser=await chromium.launch({executablePath:process.env.CHROME_PATH || undefined,headless:true,args:['--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+  try{
+    const page=await browser.newPage({viewport:{width:1500,height:1150}});
+    const errors=[];page.on('pageerror',e=>errors.push(e.message));
+    await page.goto(base);
+    await page.waitForFunction(()=>!document.querySelector('#export').disabled);
+    const previous=await page.locator('#snapshot-info').innerText();
+    await page.locator('#recovery').fill('48');
+    await page.locator('#lull').check();
+    await page.locator('#hard-ore').check();
+    const accepted=page.waitForResponse(r=>r.url().includes('future-request/features/request_json')&&r.request().method()==='PUT');
+    await page.locator('#boundary').click();
+    await accepted;
+    const replacement={id:require('crypto').randomUUID(),mode:'evaluate',reduction_mw:80,duration_h:4,lead_h:2,recovery_h:24,max_copper_loss_pct:2,lull:false,bess_fault:false,hard_ore:false};
+    const requestUrl=new URL('/ditto/api/2/things/kz.tynys:future-request/features/request_json/properties/value',base).href;
+    const response=await page.request.put(requestUrl,{data:JSON.stringify(JSON.stringify(replacement)),headers:{'Content-Type':'application/json'}});
+    assert(response.ok());
+    await page.waitForFunction(()=>document.querySelector('#request-status').textContent.includes('заменён'),{},{timeout:30000});
+    assert.equal(await page.locator('#submit').isDisabled(),false);
+    assert.equal(await page.locator('#snapshot-info').innerText(),previous);
+    assert.match(await page.locator('#result-warning').innerText(),/другой вкладки/);
+    assert.deepEqual(errors,[]);
+    const mobile=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:1,isMobile:true});
+    await mobile.goto(base);
+    await mobile.waitForFunction(()=>!document.querySelector('#export').disabled);
+    assert.equal(await mobile.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth),false);
+    await mobile.screenshot({path:path.join(output,'futures-mobile.png'),fullPage:true});
+    const result={status:'PASS',checks:['replacement request releases first browser form','foreign result does not replace selected report','mobile scenes are full width with no overflow'],errors};
+    fs.writeFileSync(path.join(output,'futures-superseded-verification.json'),JSON.stringify(result,null,2));
+    console.log(JSON.stringify(result));
+  }finally{await browser.close();}
+})().catch(e=>{console.error(e.stack);process.exitCode=1});

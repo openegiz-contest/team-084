@@ -1,4 +1,4 @@
-.PHONY: up down ps logs smoke clean example-mine example-mine-stop install uninstall status endpoints upgrade upload-build generate-data copy-build unity-demo check-secrets check-public-host
+.PHONY: tynys tynys-stop tynys-smoke up down ps logs smoke clean example-mine example-mine-stop install uninstall status endpoints upgrade upload-build generate-data copy-build unity-demo check-secrets check-public-host
 
 # ---------------------------------------------------------------------------
 # Docker Compose deployment (laptops, CI, contest judges): deploy/compose/
@@ -9,7 +9,11 @@ COMPOSE_BASE := docker compose -f deploy/compose/docker-compose.yml
 # `make clean` forgets it.
 MINE_MARKER  := deploy/compose/.example-mine
 MINE_COMPOSE := examples/mine/compose.yml
-COMPOSE := $(COMPOSE_BASE)$(if $(wildcard $(MINE_MARKER)), -f $(MINE_COMPOSE))
+TYNYS_MARKER  := deploy/compose/.tynys
+TYNYS_COMPOSE := team/tynys/compose.yml
+# Include Tynys on its very first start too: applying it after a base-only up
+# would recreate the Ditto cluster immediately after bootstrap.
+COMPOSE := $(COMPOSE_BASE)$(if $(wildcard $(MINE_MARKER)), -f $(MINE_COMPOSE))$(if $(or $(wildcard $(TYNYS_MARKER)),$(filter tynys,$(MAKECMDGOALS))), -f $(TYNYS_COMPOSE))
 
 ## Start the whole platform with Docker Compose (first run: generates credentials)
 up:
@@ -49,10 +53,22 @@ example-mine: up
 example-mine-stop:
 	$(COMPOSE_BASE) -f $(MINE_COMPOSE) stop mine-simulator
 
+## Рудник «Тыныс» (Актогай): двойники, поле, координатор MPC, экран :8095, дашборд Grafana
+tynys: up
+	@touch $(TYNYS_MARKER)
+	@bash team/tynys/scripts/smoke.sh
+	@echo "Тыныс запущен: экран рудника -> http://localhost:$${TYNYS_UI_PORT:-8095}  ·  Grafana -> Dashboards -> Тыныс · Актогай"
+
+tynys-stop:
+	$(COMPOSE_BASE) -f $(TYNYS_COMPOSE) stop tynys-field tynys-coordinator tynys-futures
+
+tynys-smoke:
+	@bash team/tynys/scripts/smoke.sh
+
 ## Stop the platform and DELETE all its data and credentials
 clean:
 	$(COMPOSE) down -v --remove-orphans
-	rm -f deploy/compose/.env $(MINE_MARKER)
+	rm -f deploy/compose/.env $(MINE_MARKER) $(TYNYS_MARKER)
 
 # ---------------------------------------------------------------------------
 # Helm deployment (servers): the chart at the repository root

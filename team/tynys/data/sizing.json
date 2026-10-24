@@ -1,0 +1,40 @@
+{
+  "model_version": "physics-v4-geomet-maintenance",
+  "seasons": [
+    15,
+    105,
+    196,
+    288
+  ],
+  "days": 14,
+  "seed": 7,
+  "solver": {
+    "time_limit": null,
+    "node_limit": 16,
+    "mip_rel_gap": 0.01
+  },
+  "wind_mw": [
+    0.0,
+    150.0,
+    300.0,
+    450.0,
+    600.0
+  ],
+  "pv_mwp": [
+    0,
+    125,
+    250,
+    375,
+    500
+  ],
+  "variants": [
+    "V0",
+    "V2",
+    "V2fixed",
+    "V2green"
+  ],
+  "geomet": "10.5281/zenodo.7051975",
+  "auxiliary_nominal_mw": 83.0,
+  "produced_by": "GitHub Actions sizing.yml (матрица вариант × ВЭС), коммит 813db60",
+  "csv_sha256": "722f6639ff62e9c8987e70e70b66fc1659e45aaa8eda72da6b87abcafdc8b0f8"
+}
