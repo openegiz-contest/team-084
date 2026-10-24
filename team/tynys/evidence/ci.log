@@ -9,7 +9,7 @@ Credentials live in deploy/compose/.env. Check everything with: make smoke
 STAND OK: 17 UI assets match; live CO2 for V0/V1/V2; 100 sizing rows match
 SMOKE OK: модельный час 10, координатор решил час 10, источник решений "coordinator"
 Тыныс запущен: экран рудника -> http://localhost:8095  ·  Grafana -> Dashboards -> Тыныс · Актогай
-Время запуска по README: 200 с
+Время запуска по README: 218 с
 line_trip          Δмедь за 48 ч -305.5 т, с учётом склада +0.5 т; ΔCO₂ -1542.5 т, с учётом запасов +1063.5 т
 kegoc              Δмедь за 48 ч +165.2 т, с учётом склада -401.1 т; ΔCO₂ -979.8 т, с учётом запасов -4393.1 т
 plan_up            Δмедь за 48 ч -8.7 т, с учётом склада +25.6 т; ΔCO₂ +63.7 т, с учётом запасов +332.3 т
@@ -25,6 +25,6 @@ hard_ore    принят=True след_в_двойниках=True отменён
 plan_up     принят=True след_в_двойниках=True отменён=True
 lull        принят=True след_в_двойниках=True отменён=True
 WHATIF OK
-{"status": "PASS", "mode": "functional", "functional_status": "PASS", "performance_gated": false, "meets_threshold": null, "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)", "rendered_frames": 11, "fps": "не проверяется в функциональном режиме; замер FPS — режим performance", "draw_calls": {"min": 108, "median": 108, "max": 108}, "triangles": {"min": 64676, "median": 64676, "max": 64676}, "source": "● живые двойники OpenEgiz", "report": "screen3d.json", "failure": null}
+{"status": "PASS", "mode": "functional", "functional_status": "PASS", "performance_gated": false, "meets_threshold": null, "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)", "rendered_frames": 10, "fps": "не проверяется в функциональном режиме; замер FPS — режим performance", "draw_calls": {"min": 108, "median": 108, "max": 108}, "triangles": {"min": 64676, "median": 64676, "max": 64676}, "source": "● живые двойники OpenEgiz", "report": "screen3d.json", "failure": null}
 3D FUNCTIONAL OK
-commit 5dae3554cdb2eb519451641a7fe3dc79864328d5 · run 40116306944
+commit f67d2027fe6e1a992dc5c91294872f4f4704d535 · run 40118547200

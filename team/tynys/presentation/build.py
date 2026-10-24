@@ -174,6 +174,7 @@ def slides():
 <tr><td>Цель «CO₂»</td><td>{mt(g['d_cu_t'])}</td><td>{m(g['copper_musd'])}</td><td>{m(g['d_grid_gwh'])}</td><td>{m(g['energy_musd'])}</td><td><b>{m(g['net_musd'])}</b></td></tr></table>
 <ul style="margin-top:18px"><li>Без платы за CO₂ выгоднее цель «медь». Цель «CO₂» снижает выбросы на {f(-g['d_co2_kt'])} тыс. т в год — это ≈ {f(g['usd_per_t_co2_avoided'])} $ за тонну CO₂.</li>
 <li>Тот же CO₂ ветряками: ≈ {f(w['equivalent_mw_per_t_cu'])}–{f(w['equivalent_mw'])} МВт ВЭС ≈ {f(w['capex_musd_per_t_cu'])}–{f(w['capex_musd'])} млн $ единоразово — окупается против цели «CO₂» за 3–4 года.</li>
+<li>Без компромисса: цель «медь» + ещё 150 МВт ВЭС (≈ {f(eco['copper_goal_plus_150mw']['capex_musd'])} млн $) — медь {mt(eco['copper_goal_plus_150mw']['d_cu_t'])} т и CO₂ {m(eco['copper_goal_plus_150mw']['d_co2_kt'])} тыс. т в год к «как сейчас»; окупаемость ≈ {f(eco['copper_goal_plus_150mw']['simple_payback_years'],1)} года.</li>
 <li>В обеих целях координация вдвое сокращает сброс ветра и солнца. Что важнее — медь или уголь — решает руководство.</li></ul>
 <p class="sm">Медь 14 441 $/т (LME, 21.10.2026), оплачиваемая доля 0,85 (допущение), курс 452,59 тенге за $ (Нацбанк РК, 20.10.2026), тариф 49,03 тенге/кВт·ч, ВЭС 1 041 $/кВт (IRENA 2024). Расчёт: <code>team/tynys/economics.py</code>.</p><div class="n">12</div></div>""")
     S.append(f"""<div class="s"><p class="eb">ЧЕСТНО О ГРАНИЦАХ</p><h2>Что модель утверждает — и чего нет</h2>

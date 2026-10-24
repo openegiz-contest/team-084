@@ -13,6 +13,10 @@
 Стоимость накопителя, самосвалов и самих ВЭС/СЭС 300/250 одинакова во всех
 вариантах и в разницу не входит.
 
+Отдельно: цель «медь» с ВЭС на 150 МВт больше против управления «как сейчас»
+при 300/250 — больше меди и меньше CO₂ одновременно (простая окупаемость без
+эксплуатации, финансирования и присоединения к сети).
+
     python economics.py              # из team/tynys; пишет data/economics.json
 """
 from pathlib import Path
@@ -60,6 +64,19 @@ def economics(wind=300, pv=250):
         "capex_musd": round(eq["equivalent_wind_mw"] * PRICES["wind_capex_usd_kw"] / 1000, 0),
         "capex_musd_per_t_cu": round((eq.get("equivalent_wind_mw_per_t_cu") or 0) * PRICES["wind_capex_usd_kw"] / 1000, 0),
     }
+    # Без компромисса: цель «медь» плюс ещё 150 МВт ВЭС против V0 при 300/250.
+    plus = d[(d.wind_mw == wind + 150) & (d.pv_mwp == pv) & (d.variant == "V2")].iloc[0]
+    d_cu = float(plus.cu_adj_t - base.cu_adj_t)
+    d_co2_kt = float(plus.co2_adj_kt - base.co2_adj_kt)
+    d_mwh = d_co2_kt * 1000 / p.grid_co2_t_mwh
+    annual = d_cu * cu_usd / 1e6 - d_mwh * tariff_usd_mwh / 1e6
+    capex = 150 * PRICES["wind_capex_usd_kw"] / 1000
+    out["copper_goal_plus_150mw"] = {
+        "wind_mw": wind + 150, "co2_kt": float(plus.co2_adj_kt), "cu_t": float(plus.cu_adj_t),
+        "d_cu_t": round(d_cu, 1), "d_co2_kt": round(d_co2_kt, 1), "curtail_gwh": round(float(plus.curtail_mwh) / 1000, 1),
+        "annual_musd": round(annual, 1), "capex_musd": round(capex, 0),
+        "simple_payback_years": round(capex / annual, 1) if annual > 0 else None,
+    }
     return out
 
 
@@ -73,6 +90,9 @@ def main():
     w = result["wind_alternative"]
     print(f"Те же CO₂ ветряками: {w['equivalent_mw_per_t_cu']:.0f}–{w['equivalent_mw']:.0f} МВт ВЭС ≈ "
           f"{w['capex_musd_per_t_cu']:.0f}–{w['capex_musd']:.0f} млн $ единоразово")
+    c = result["copper_goal_plus_150mw"]
+    print(f"Цель «медь» + ВЭС {c['wind_mw']}: медь {c['d_cu_t']:+.0f} т, CO₂ {c['d_co2_kt']:+.1f} тыс. т к V0 при {result['wind_mw']}; "
+          f"{c['annual_musd']:+.1f} млн $/год, 150 МВт ≈ {c['capex_musd']:.0f} млн $, простая окупаемость ≈ {c['simple_payback_years']} года")
 
 
 if __name__ == "__main__":

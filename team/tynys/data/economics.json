@@ -39,5 +39,16 @@
     "equivalent_mw_per_t_cu": 68.9,
     "capex_musd": 93.0,
     "capex_musd_per_t_cu": 72.0
+  },
+  "copper_goal_plus_150mw": {
+    "wind_mw": 450,
+    "co2_kt": 917.2,
+    "cu_t": 221283.0,
+    "d_cu_t": 2214.7,
+    "d_co2_kt": -60.7,
+    "curtail_gwh": 206.6,
+    "annual_musd": 35.5,
+    "capex_musd": 156.0,
+    "simple_payback_years": 4.4
   }
 }
