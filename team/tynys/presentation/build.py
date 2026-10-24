@@ -1,4 +1,5 @@
-"""Собирает presentation.pdf (корень репозитория) из данных решения.
+"""Собирает справочные слайды стенда stand-slides.pdf из данных решения
+(основная презентация команды — presentation.pdf в корне репозитория).
 
 Все числа берутся из data/sizing.csv и data/flex.csv, а не пишутся вручную.
 Снимки экранов — img/*.png (снимаются со стенда скриптом shots.py).
@@ -197,7 +198,7 @@ def build():
         async with async_playwright() as p:
             b = await p.chromium.launch(); pg = await b.new_page(viewport={"width": 1280, "height": 720})
             await pg.goto("file://" + path); await pg.wait_for_timeout(800)
-            await pg.pdf(path=os.path.join(ROOT, "presentation.pdf"), width="1280px", height="720px", print_background=True)
+            await pg.pdf(path=os.path.join(HERE, "stand-slides.pdf"), width="1280px", height="720px", print_background=True)
             await b.close()
     asyncio.run(pdf())
     for k, v in N.items():
