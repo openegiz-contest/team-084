@@ -12,6 +12,7 @@ D = os.path.join(HERE, "..", "data")
 sz = pd.read_csv(os.path.join(D, "sizing.csv"))
 fx = pd.read_csv(os.path.join(D, "flex.csv"))
 eq = json.load(open(os.path.join(D, "wind-equivalent.json"), encoding="utf-8"))
+eco = json.load(open(os.path.join(D, "economics.json"), encoding="utf-8"))
 
 
 def row(w, p, v):
@@ -55,7 +56,7 @@ N = dict(
     flex_hp10=f(year.h_p10, 1), flex_hp90=f(year.h_p90, 1), flex_mean=f(year.mw_mean),
     green_cu=f(pct(r["V2green"].cu_adj_t, r["V0"].cu_adj_t), 1), fixed_cu=f(pct(r["V2fixed"].cu_adj_t, r["V0"].cu_adj_t), 1),
     green_total=f(pct(r["V2green"].co2_adj_kt, base.co2_adj_kt), 1),
-    eq_mw=f(eq["equivalent_wind_mw"]), eq_req=f(eq["required_baseline_wind_mw"]), eq_cu=f(eq["copper_change_pct"], 1),
+    eq_mw=f(eq["equivalent_wind_mw"]), eq_mw_cu=f(eq["equivalent_wind_mw_per_t_cu"]), eq_req=f(eq["required_baseline_wind_mw"]), eq_cu=f(eq["copper_change_pct"], 1),
 )
 
 CSS = """
@@ -139,7 +140,7 @@ def slides():
 <div class="grid" style="grid-template-columns:780px 1fr;gap:26px"><img class="shot" src="img/3d.png" style="width:780px">
 <ul style="padding-left:20px;margin:0"><li style="font-size:18px">«История: проблема → решение» — облёт с подписями</li>
 <li style="font-size:18px">«Как сейчас / С „Тыныс“» — тот же час без координации и с ней</li><li style="font-size:18px">Щелчок по оборудованию — числа из двойника</li>
-<li style="font-size:18px">Сценарии видны на оборудовании: красная линия, лимит сети на ЛЭП, отказ накопителя</li><li style="font-size:18px">Без видеокарты сцена сама переходит в облегчённый режим</li></ul></div><div class="n">8</div></div>""")
+<li style="font-size:18px">Сценарии видны на оборудовании: красная линия, лимит сети на ЛЭП, отказ накопителя</li><li style="font-size:18px">Без видеокарты сцена сама переходит в облегчённый режим</li><li style="font-size:18px">Главная <code>http://localhost:8095</code> — та же шахта в Unity; плашка сверху показывает активные сценарии и ведёт к их запуску</li></ul></div><div class="n">8</div></div>""")
     S.append(f"""<div class="s" style="padding:40px 50px"><p class="eb">ГДЕ СМОТРЕТЬ НА СТЕНДЕ · 3 / 3</p><h2 style="font-size:30px;margin-bottom:14px">Два будущих — <code>/futures.html</code></h2>
 <div class="grid" style="grid-template-columns:780px 1fr;gap:26px"><img class="shot" src="img/futures.png" style="width:780px">
 <ul style="padding-left:20px;margin:0"><li style="font-size:18px">Запрос KEGOC: на сколько МВт и часов снизить лимит</li>
@@ -161,15 +162,27 @@ def slides():
 <tr><td>ВИЭ, управление как сейчас</td><td>{n['co2_res']} <span class="m">({n['res_drop']} %)</span></td><td>{n['cu_res']}</td><td>{n['curt_res']}</td></tr>
 <tr><td>ВИЭ + «Тыныс», цель «CO₂»</td><td><em>{n['co2_green']}</em></td><td>{n['cu_green']}</td><td><em>{n['curt_green']}</em></td></tr>
 <tr><td>ВИЭ + «Тыныс», цель «медь»</td><td class="cu">{n['co2_cu']}</td><td class="cu">{n['cu_cu']}</td><td>{n['curt_cu']}</td></tr></table>
-<ul style="margin-top:16px"><li>Цель «CO₂» к управлению «как сейчас» при тех же ВИЭ: {n['green_vs_res']} % CO₂ (всего {n['green_total']} % к сегодняшнему), по 25 сочетаниям от {n['green_min']} до {n['green_max']} %; медь {n['green_cu']} %. Это как ≈ {n['eq_mw']} МВт дополнительных ветряков.</li>
+<ul style="margin-top:16px"><li>Цель «CO₂» к управлению «как сейчас» при тех же ВИЭ: {n['green_vs_res']} % CO₂ (всего {n['green_total']} % к сегодняшнему), по 25 сочетаниям от {n['green_min']} до {n['green_max']} %; медь {n['green_cu']} %. Это как ≈ {n['eq_mw']} МВт дополнительных ветряков (≈ {n['eq_mw_cu']} МВт, если сравнивать CO₂ на тонну меди).</li>
 <li>Цель «медь»: +{n['cu_gain']} % меди за счёт более тонкого помола, но CO₂ +{n['cuco2']} %.</li></ul>
 <p class="sm">* С учётом запасов в конце прогонов (склады, заряд батарей). Источник: <code>team/tynys/sizing.py</code> → <code>data/sizing.csv</code>, сводка — <code>analyze_sizing.py</code>.</p><div class="n">11</div></div>""")
+    a, g, w = eco["variants"]["V2"], eco["variants"]["V2green"], eco["wind_alternative"]
+    m = lambda x: ("+" if x > 0 else "−" if x < 0 else "") + f(abs(x), 1)
+    mt = lambda x: ("+" if x > 0 else "−" if x < 0 else "") + f(abs(x))
+    S.append(f"""<div class="s"><p class="eb">ЦЕНА ВЫБОРА В ДЕНЬГАХ · ВЭС {W} + СЭС {P} МВт · К УПРАВЛЕНИЮ «КАК СЕЙЧАС»</p><h2>Медь или уголь — двойник показывает цену решения</h2>
+<table><tr><th></th><th>Медь, т/год</th><th>Медь, млн $</th><th>Энергия, ГВт·ч</th><th>Энергия, млн $</th><th>Итого, млн $/год</th></tr>
+<tr><td>Цель «медь»</td><td>{mt(a['d_cu_t'])}</td><td>{m(a['copper_musd'])}</td><td>{m(a['d_grid_gwh'])}</td><td>{m(a['energy_musd'])}</td><td class="cu"><b>{m(a['net_musd'])}</b></td></tr>
+<tr><td>Цель «CO₂»</td><td>{mt(g['d_cu_t'])}</td><td>{m(g['copper_musd'])}</td><td>{m(g['d_grid_gwh'])}</td><td>{m(g['energy_musd'])}</td><td><b>{m(g['net_musd'])}</b></td></tr></table>
+<ul style="margin-top:18px"><li>Без платы за CO₂ выгоднее цель «медь». Цель «CO₂» снижает выбросы на {f(-g['d_co2_kt'])} тыс. т в год — это ≈ {f(g['usd_per_t_co2_avoided'])} $ за тонну CO₂.</li>
+<li>Тот же CO₂ ветряками: ≈ {f(w['equivalent_mw_per_t_cu'])}–{f(w['equivalent_mw'])} МВт ВЭС ≈ {f(w['capex_musd_per_t_cu'])}–{f(w['capex_musd'])} млн $ единоразово — окупается против цели «CO₂» за 3–4 года.</li>
+<li>В обеих целях координация вдвое сокращает сброс ветра и солнца. Что важнее — медь или уголь — решает руководство.</li></ul>
+<p class="sm">Медь 14 441 $/т (LME, 21.10.2026), оплачиваемая доля 0,85 (допущение), курс 452,59 тенге за $ (Нацбанк РК, 20.10.2026), тариф 49,03 тенге/кВт·ч, ВЭС 1 041 $/кВт (IRENA 2024). Расчёт: <code>team/tynys/economics.py</code>.</p><div class="n">12</div></div>""")
     S.append(f"""<div class="s"><p class="eb">ЧЕСТНО О ГРАНИЦАХ</p><h2>Что модель утверждает — и чего нет</h2>
 <ul><li>Прирост меди +{n['cu_min']}…+{n['cu_max']} % у цели «медь» — эффект тонкого помола, а не подстройки под ВИЭ. С крупностью «как сейчас» координатор теряет {n['fixed_cu']} % меди на остановках и перестройках линий — это цена гибкости.</li>
 <li>Резерв для KEGOC по состоянию модели: медиана {n['flex_mw']} МВт (p10–p90 {n['flex_p10']}–{n['flex_p90']}) на {n['flex_h']} ч (p10–p90 {n['flex_hp10']}–{n['flex_hp90']}). Постоянная часть мощности мельниц и пределы изменения подачи честно уменьшили оценку. Конкретное обещание проверяется в «Двух будущих».</li>
-<li>Модель часовая; движение самосвалов на экранах — схема (ускорено ×10), заряд и состояние звеньев — из модели.</li>
-<li>Геология — открытый пространственный аналог GeoMet, а не скважины Актогая; прогноз погоды — реальный ряд плюс модельная ошибка; ERA5 занижает ветер.</li></ul>
-<p style="margin-top:26px"><em>Польза:</em> руководство видит, какие ВЭС и СЭС окупаются меньшим углём; энергетик понимает каждое решение — двойник объясняет его словами.</p><div class="n">12</div></div>""")
+<li>Модель часовая; движение самосвалов на экранах — схема (ускорено ×6), заряд и состояние звеньев — из модели.</li>
+<li>Геология — открытый пространственный аналог GeoMet, а не скважины Актогая; прогноз погоды — реальный ряд плюс модельная ошибка; ERA5 занижает ветер.</li>
+<li>Гибкость держится на мельницах; износ от перестроек и от тонкого помола не учтён, случайных отказов нет — настоящий рудник даст меньше гибкости, чем модель.</li></ul>
+<p style="margin-top:26px"><em>Польза:</em> руководство видит, какие ВЭС и СЭС окупаются меньшим углём; энергетик понимает каждое решение — двойник объясняет его словами.</p><div class="n">13</div></div>""")
     return S
 
 

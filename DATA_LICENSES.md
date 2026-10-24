@@ -7,8 +7,9 @@
 | Углеродоёмкость сети Казахстана 0,79 т CO₂/МВт·ч | расчёт по Agora Energiewende (2025): 92,6 Мт CO₂ / 117,9 ТВт·ч, 2023 | числовой факт со ссылкой | `params.py` |
 | Тариф 49,03 ₸/кВт·ч | РЭК «Рудный», тариф для юрлиц с 01.10.2026 | публичный тариф | `params.py` |
 | Батарея 2,6 МВт·ч и зарядка 6 МВт электросамосвала | публикации о Fortescue / Liebherr T264 (2026) | числовой факт со ссылкой | `params.py` |
+| Цена меди 14 441 $/т (LME cash, 21.10.2026), курс 452,59 ₸/$ (Нацбанк РК, 20.10.2026), стоимость ВЭС 1 041 $/кВт (IRENA, Renewable Power Generation Costs in 2024) | reporteminero.cl (по данным Cochilco), mybuh.kz (курс Нацбанка), IRENA (2025) | числовые факты со ссылкой | `team/tynys/economics.py` → `data/economics.json` |
 | `team/tynys/data/sizing.csv` | расчёт команды: `team/tynys/sizing.py` на данных выше | MIT (как всё решение) | В репозитории |
 | `team/tynys/data/geomet/*.csv`, `source.json` | Hoffimann et al., GeoMet v4, DOI 10.5281/zenodo.7051975 | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | CSV без изменений; [атрибуция, контрольные суммы и все преобразования](team/tynys/data/geomet/README.md). Пространственный аналог, не данные Актогая |
-| `sizing-physics-v4.csv`, `flex-physics-v4.csv`, `wind-equivalent-*.json` | Модель команды с GeoMet и ERA5 | Код расчёта MIT; GeoMet CC BY 4.0 сохраняет атрибуцию | Версия и параметры рядом в JSON; [границы выводов](team/tynys/MODULES_V4.md) |
+| `team/tynys/data/sizing.json`, `flex.csv`, `flex.json`, `wind-equivalent.json`; архив прежней модели — `team/tynys/data/archive/` | Модель команды с GeoMet и ERA5 | Код расчёта MIT; GeoMet CC BY 4.0 сохраняет атрибуцию | Версия и параметры рядом в JSON; [границы выводов](team/tynys/MODULES_V4.md) |
 
 Конфиденциальных данных организаций и персональных данных в решении нет.

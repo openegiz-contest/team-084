@@ -101,7 +101,7 @@ def test_liner_service_stops_line_resets_wear_and_roundtrips():
 
 def test_wind_equivalent_archive_and_no_false_savings():
     path = DATA.parent/'archive'/'sizing-legacy-v1.csv'
-    result = analyze(path)
+    result = analyze(path, pv=500., copper_tolerance=.01)
     assert result['archived']
     assert result['equivalent_wind_mw'] == pytest.approx((778.5-723.8)/(778.5-715.7)*150)
     assert result['grid_step_equivalent_mw'] == 150
@@ -111,10 +111,18 @@ def test_wind_equivalent_archive_and_no_false_savings():
         changed = data.copy()
         mask = (changed.variant=='V2green') & (changed.wind_mw==300) & (changed.pv_mwp==500)
         changed.loc[mask,['cu_adj_t','co2_adj_kt']] = [cu,co2]
-        assert wind_equivalent(changed)['status'] == 'unavailable'
+        assert wind_equivalent(changed, pv=500., copper_tolerance=.01)['status'] == 'unavailable'
     assert wind_equivalent(data,pv=501)['status'] == 'unavailable'
     with pytest.raises(ValueError,match='Duplicate'):
-        wind_equivalent(pd.concat([data,data.iloc[:1]]))
+        wind_equivalent(pd.concat([data,data.iloc[:1]]), pv=500.)
+
+
+def test_wind_equivalent_current_defaults():
+    result = analyze(DATA.parent/'sizing.csv')
+    assert result['status'] == 'ok' and not result['archived']
+    assert result['pv_mwp'] == 250 and result['copper_tolerance_pct'] == pytest.approx(1.5)
+    assert result['equivalent_wind_mw'] == pytest.approx(89.3, abs=0.1)
+    assert 0 < result['equivalent_wind_mw_per_t_cu'] < result['equivalent_wind_mw']
 
 
 def test_demo_wind_effect_compares_identical_hour_and_setpoints():

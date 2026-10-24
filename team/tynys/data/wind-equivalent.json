@@ -1,6 +1,6 @@
 {
-  "wind_mw": 300.0,
-  "pv_mwp": 250.0,
+  "wind_mw": 300,
+  "pv_mwp": 250,
   "variant": "V2green",
   "copper_tolerance_pct": 1.5,
   "status": "ok",
@@ -8,6 +8,7 @@
   "target_co2_kt": 934.6,
   "target_cu_t": 216775.0,
   "required_baseline_wind_mw": 389.3397524071527,
+  "equivalent_wind_mw_per_t_cu": 68.93955823907993,
   "copper_change_pct": -1.0468424687642974,
   "grid_step_equivalent_mw": 150.0,
   "bracket_wind_mw": [

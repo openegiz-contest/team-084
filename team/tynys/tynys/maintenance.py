@@ -96,7 +96,7 @@ def schedule(p, env, st, t, coordinated):
             value = float(np.sum(avoided[start-t:end-t]*prices[start-t:end-t]))
             candidates.append((start, value))
         if not candidates:
-            raise ValueError("maintenance: no feasible window with one crew")
+            continue   # горизонт или бригада не дают окна сейчас; повторим в следующий час
         start, value = (max(candidates, key=lambda v: (v[1], -v[0])) if coordinated else
                         min(candidates, key=lambda v: (abs(v[0]-item["nominal"]), v[0])))
         st.maintenance[name] = {**item, "start": int(start), "strategy": "forecast" if coordinated else "calendar",

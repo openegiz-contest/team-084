@@ -1,0 +1,43 @@
+{
+  "wind_mw": 300,
+  "pv_mwp": 250,
+  "prices": {
+    "copper_usd_t": 14441.0,
+    "copper_source": "LME cash 21.10.2026 (reporteminero.cl / Cochilco)",
+    "usd_kzt": 452.59,
+    "usd_kzt_source": "Нацбанк РК, 20.10.2026",
+    "wind_capex_usd_kw": 1041.0,
+    "wind_capex_source": "IRENA, Renewable Power Generation Costs in 2024 (2025)",
+    "cu_payable": 0.85,
+    "tariff_kzt_kwh": 49.03,
+    "grid_co2_t_mwh": 0.79
+  },
+  "variants": {
+    "V2": {
+      "label": "цель «медь»",
+      "d_cu_t": 2075.7,
+      "d_co2_kt": 22.3,
+      "d_grid_gwh": 28.2,
+      "copper_musd": 25.5,
+      "energy_musd": -3.1,
+      "net_musd": 22.4,
+      "usd_per_t_co2_avoided": null
+    },
+    "V2green": {
+      "label": "цель «CO₂»",
+      "d_cu_t": -2293.3,
+      "d_co2_kt": -43.3,
+      "d_grid_gwh": -54.8,
+      "copper_musd": -28.1,
+      "energy_musd": 5.9,
+      "net_musd": -22.2,
+      "usd_per_t_co2_avoided": 513.0
+    }
+  },
+  "wind_alternative": {
+    "equivalent_mw": 89.3,
+    "equivalent_mw_per_t_cu": 68.9,
+    "capex_musd": 93.0,
+    "capex_musd_per_t_cu": 72.0
+  }
+}

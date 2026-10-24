@@ -559,12 +559,17 @@ async def main(url, out, threshold, seconds, warmup, mode="all", expect_source=N
                 summary.write(f"- Trace SHA256: `{report['replay']['sha256']}` (recorded data, no live backend).\n")
             if report.get("failure"):
                 summary.write(f"- Failure: {report['failure']}\n")
+    summary_fps = ({"median_fps": performance.get("median_fps"), "p10_fps": performance.get("p10_fps"),
+                    "min_fps": performance.get("min_fps")} if performance_gated else
+                   # Функциональный режим идёт на той же машине, что весь стенд
+                   # (в CI — 2 CPU без GPU); FPS там не показателен и не проверяется.
+                   {"rendered_frames": performance.get("rendered_frames"),
+                    "fps": "не проверяется в функциональном режиме; замер FPS — режим performance"})
     print(json.dumps({
         "status": report["status"], "mode": mode, "functional_status": report["functional_status"],
-        "performance_gated": performance_gated, "meets_threshold": performance.get("meets_threshold"),
+        "performance_gated": performance_gated, "meets_threshold": performance.get("meets_threshold") if performance_gated else None,
         "renderer": performance.get("environment", {}).get("glRenderer"),
-        "median_fps": performance.get("median_fps"), "p10_fps": performance.get("p10_fps"),
-        "min_fps": performance.get("min_fps"), "draw_calls": performance.get("draw_calls"),
+        **summary_fps, "draw_calls": performance.get("draw_calls"),
         "triangles": performance.get("triangles"), "source": report.get("source"),
         "report": str(report_path), "failure": report.get("failure"),
     }, ensure_ascii=False))

@@ -99,7 +99,7 @@ for (let i = 0; i < 8; i++) { const r = document.createElementNS(SVGNS, 'rect');
 const tune = document.createElement('div');
 tune.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;font-size:11px;color:var(--muted)';
 tune.innerHTML = '<label>Линия аварии <select id="ev-line"><option value="1">1</option><option value="2" selected>2</option></select></label>' +
-  '<label>Длительность, ч <input id="ev-duration" type="number" min="1" max="168" value="24"></label>' +
+  '<label>Длительность, ч <input id="ev-duration" type="number" min="1" max="168" value="" placeholder="по сценарию" title="Пусто — длительность сценария по умолчанию"></label>' +
   '<label>Снижение KEGOC, МВт <input id="ev-grid-drop" type="number" min="0" max="300" step="5" value="80"></label>' +
   '<label>Отказ самосвалов, % <input id="ev-truck-loss" type="number" min="0" max="100" value="25"></label>' +
   '<label>Отказ экскаватора, % <input id="ev-exc-loss" type="number" min="0" max="100" value="50"></label>' +
@@ -125,7 +125,7 @@ async function writeScenario(events, goal) {
 function curEvents() { try { return JSON.parse(v('scenario', 'events', '[]') || '[]'); } catch (e) { return []; } }
 async function addEvent(kind) {
   const [, lead, defaultDur] = EVENTS[kind]; const t = v('site', 'sim_hour', 0);
-  const num = (id, fallback) => Number.isFinite(+$(id).value) ? +$(id).value : fallback;
+  const num = (id, fallback) => { const raw = String($(id).value ?? '').trim(); return raw !== '' && Number.isFinite(+raw) ? +raw : fallback; };
   const dur = Math.max(1, Math.min(168, num('ev-duration', defaultDur)));
   const ev = {kind, t0: t + 1 + lead, dur, id: Date.now()};
   if (kind === 'line_trip') ev.line = num('ev-line', 2);
@@ -221,10 +221,14 @@ function render() {
   // label that value as inventory-adjusted without the new companion metric.
   const metric = (c, f) => f === 'co2_per_t_cu' && numeric(v(c, 'co2_adj_t', null)) === null
     ? null : v(c, f, null);
+  // В первые часы поправка на запасы (заряд батарей сверх начального уже куплен)
+  // может дать отрицательный итог; физически это «почти ноль», а не поглощение CO₂.
+  const adjCell = (f, x, k) => (f === 'co2_adj_t' || f === 'co2_per_t_cu') && numeric(x) !== null && x < 0
+    ? '<span title="Поправка на запасы в первые часы больше выбросов: итог ещё около нуля">≈ 0</span>' : fmt(x, k);
   rows.push(['<b>Медь − энергия, млн ₸</b>', null, 0]);
   $('kt').innerHTML = rows.map(([lbl, f, k]) => f === null
     ? `<tr><td>${lbl}</td>${cols.map(c => `<td style="${margin(c) === best ? 'color:var(--v2);font-weight:700' : ''}">${fmt(margin(c))}</td>`).join('')}</tr>`
-    : `<tr><td>${lbl}</td>${cols.map(c => `<td>${fmt(metric(c, f), k)}</td>`).join('')}</tr>`).join('');
+    : `<tr><td>${lbl}</td>${cols.map(c => `<td>${adjCell(f, metric(c, f), k)}</td>`).join('')}</tr>`).join('');
   renderComparisonContext();
   $('flex').textContent = fmt(v('substation', 'flex_down_mw', null)); $('flexh').textContent = fmt(v('substation', 'flex_down_h', null), 1);
   const now = [['Нагрузка', fmt(v('energy', 'load_mw')) + ' МВт'], ['ВИЭ', fmt(v('energy', 'renew_mw')) + ' МВт'],
@@ -326,7 +330,7 @@ async function loadSizing() {
     const eq = attrs.wind_equivalent, current = attrs.wind_equivalent_current;
     if (eq?.status==='ok') {
       $('page-title').textContent = `Тыныс: эквивалент ${fmt(eq.equivalent_wind_mw)} МВт ВЭС${eq.archived?' в архивном расчёте':''}.`;
-      $('equivalent-note').textContent = `ВЭС ${fmt(eq.wind_mw)} + СЭС ${fmt(eq.pv_mwp)}: одинаковый CO₂ при выпуске Cu в пределах ${fmt(eq.copper_tolerance_pct,1)} %. Медь ${eq.copper_change_pct!=null?(eq.copper_change_pct>0?'+':'')+fmt(eq.copper_change_pct,1)+' %':'—'}. Без координатора — ${fmt(eq.required_baseline_wind_mw)} МВт ВЭС по интерполяции (${fmt(eq.grid_step_equivalent_mw)} МВт добавления по сетке). Это эквивалент по выбросам, не гарантированная замена оборудования.`;
+      $('equivalent-note').textContent = `ВЭС ${fmt(eq.wind_mw)} + СЭС ${fmt(eq.pv_mwp)}: одинаковый CO₂ при выпуске Cu в пределах ${fmt(eq.copper_tolerance_pct,1)} %. Медь ${eq.copper_change_pct!=null?(eq.copper_change_pct>0?'+':'')+fmt(eq.copper_change_pct,1)+' %':'—'}. Без координатора — ${fmt(eq.required_baseline_wind_mw)} МВт ВЭС по интерполяции (${fmt(eq.grid_step_equivalent_mw)} МВт добавления по сетке).${eq.equivalent_wind_mw_per_t_cu!=null?` Если сравнивать CO₂ на тонну меди (без зачёта меньшего выпуска) — ${fmt(eq.equivalent_wind_mw_per_t_cu)} МВт.`:''} Это эквивалент по выбросам, не гарантированная замена оборудования.`;
       if (eq.archived) $('equivalent-note').textContent += ' Архив legacy-v1. '+(current?.status==='unavailable'?'Новая модель: сопоставимый эквивалент пока не подтверждён.':'');
     }
   } catch (e) { return setTimeout(loadSizing, 5000); }

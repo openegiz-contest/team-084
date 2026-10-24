@@ -57,8 +57,34 @@ class Equipment:
     liner_replacements: int = 0
 
 
+# Без межремонтного интервала по моточасам: посёлок и подстанция работают
+# непрерывно и обслуживаются без остановки рудника, водоотлив резервирован.
+NO_SERVICE_INTERVAL = {"camp", "substation", "dewatering"}
+# Цепочка фабрики обслуживается одним плановым остановом (один счётчик).
+PLANT_CHAIN = {"conveyor-feed", "water", "tailings", "concentrate", "flotation"}
+# Остальные счётчики моточасов разнесены детерминированно на 0..½ интервала
+# (при интервале 720 ч — до 360 ч), чтобы
+# экскаваторы, звенья самосвалов и зарядные группы не уходили в ТО в один час
+# вместе с фабрикой (раньше всё совпадало на 720-м часу стенда). Предел 360 ч
+# меньше 720 − 336: 14-суточные предрасчёты (sizing, flex, regress) до
+# межремонтного ТО не доходят и не меняются.
+SERVICE_STAGGER_FRACTION = 0.5
+
+
+def initial_service_h(p, names):
+    spread = [n for n in names if n not in NO_SERVICE_INTERVAL | PLANT_CHAIN
+              and n != "crusher" and not n.startswith("line-")]
+    # Чередуем порядок, чтобы соседние по списку (shovel-1/shovel-2,
+    # звенья самосвалов) не шли подряд.
+    order = spread[0::2] + spread[1::2]
+    step = SERVICE_STAGGER_FRACTION * p.service_interval_h / len(order)
+    return {n: round(step * (i + 1), 1) for i, n in enumerate(order)}
+
+
 def equipment_state(p):
-    return {name: Equipment() for name in asset_specs(p)}
+    names = list(asset_specs(p))
+    start = initial_service_h(p, names)
+    return {name: Equipment(since_service_h=start.get(name, 0.0)) for name in names}
 
 
 def external_stop(env, name, t):
@@ -129,7 +155,7 @@ def finish_equipment(p, env, st, t, telemetry, factors):
         e.available_h += float(factors[name] > 0)
         if active:
             e.operating_h += 1
-            e.since_service_h += 1
+            e.since_service_h += float(name not in NO_SERVICE_INTERVAL)
             e.liner_operating_h += float(name.startswith("line-"))
             e.health = max(0.0, e.health - p.equipment_wear_per_h)
         f.update(available=factors[name] > 0, health_pct=0.0 if reason == "fault" else 100 * e.health,

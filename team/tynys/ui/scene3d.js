@@ -43,7 +43,7 @@ async function cancelScenarioEvent(id){
   const body={events:{properties:{value:JSON.stringify(events.filter(e=>String(e.id)!==String(id)))}},rev:{properties:{value:Number(v('scenario','rev',0))+1}},goal:{properties:{value:v('scenario','goal','green')}}};
   const r=await fetch(`ditto/api/2/things/${NS}:scenario/features`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});if(!r.ok)throw new Error(`Ditto: ${r.status}`);await pollLive();hud();
 }
-const SCENARIOS={lull:[3,24],line_trip:[0,8],kegoc:[2,4],hard_ore:[0,72],plan_up:[0,48],bess_fault:[0,12],truck_failure:[0,12],excavator_failure:[0,12],grade_drop:[0,24],tariff_change:[0,24]};
+const SCENARIOS={lull:[3,24],line_trip:[0,8],kegoc:[2,4],hard_ore:[0,72],plan_up:[0,48],bess_fault:[0,12],truck_failure:[0,12],excavator_failure:[0,12],grade_drop:[0,24],tariff_change:[0,24],crusher_fault:[0,8],conveyor_fault:[0,4],water_fault:[0,4]};
 async function addScenarioEvent(kind){
   const feedback=$('scenario-feedback'),buttons=[...document.querySelectorAll('[data-scenario]')];
   if(source!=='live'){feedback.textContent='Запуск доступен при связи с живыми двойниками Ditto.';return;}
@@ -52,8 +52,8 @@ async function addScenarioEvent(kind){
     await pollLive();const t=Number(v('site','sim_hour',0));let events;const raw=v('scenario','events','[]');events=Array.isArray(raw)?raw:JSON.parse(raw||'[]');
     const [lead,dur]=SCENARIOS[kind];if(!Number.isFinite(t)||!Number.isFinite(dur))throw new Error('Нет модельного времени');
     const parameter=(id,fallback)=>{
-      const el=$(id);if(!el)return fallback;
-      if(!el.value.trim()||!el.checkValidity()||!Number.isFinite(Number(el.value)))throw new Error('Проверьте параметры сценария');
+      const el=$(id);if(!el||!el.value.trim())return fallback;
+      if(!el.checkValidity()||!Number.isFinite(Number(el.value)))throw new Error('Проверьте параметры сценария');
       return Number(el.value);
     };
     events=events.filter(e=>Number(e.t0)+Number(e.dur)>t);
@@ -526,11 +526,13 @@ function hud() {
   set('l-ch', view === 'now' ? 'по графику смен' : `${fmt(e.charge)} МВт`);
   const a = { cu: v('shadow-v0', 'cu_adj_t'), co2: v('shadow-v0', 'co2_adj_t', v('shadow-v0', 'co2_t')), curt: v('shadow-v0', 'curtail_mwh') };
   const b = { cu: v('site', 'cu_adj_t'), co2: v('site', 'co2_adj_t', v('site', 'co2_t')), curt: v('site', 'curtail_mwh') };
-  const d = (x, y, inv) => { const p = 100 * (y - x) / Math.max(1, x); const good = inv ? p < 0 : p > 0; return `<small class="${good ? 'good' : 'bad'}">${p > 0 ? '+' : ''}${fmt(p, 1)} %</small>`; };
+  const co2Adj = x => Number(x) < 0 ? '≈ 0' : fmt(x);   // поправка на запасы в первые часы
+  const d = (x, y, inv) => { if (!(Math.abs(x) >= 100)) return '';   // первые часы: база слишком мала для процентов
+    const p = 100 * (y - x) / Math.max(1, x); const good = inv ? p < 0 : p > 0; return `<small class="${good ? 'good' : 'bad'}">${p > 0 ? '+' : ''}${fmt(p, 1)} %</small>`; };
   $('kt').innerHTML = `<tr><th></th><th class="bad">Как сейчас</th><th class="good">Тыныс</th></tr>
     <tr><td>Медь, т</td><td>${fmt(a.cu)}</td><td>${fmt(b.cu)} ${d(a.cu, b.cu)}</td></tr>
     <tr><td>Выброшено ВИЭ, МВт·ч</td><td>${fmt(a.curt)}</td><td>${fmt(b.curt)} ${a.curt > 0 ? d(a.curt, b.curt, 1) : ''}</td></tr>
-    <tr><td title="поправка на склады и заряд батарей в конце">CO₂ с учётом запасов, т</td><td>${fmt(a.co2)}</td><td>${fmt(b.co2)}</td></tr>`;
+    <tr><td title="поправка на склады и заряд батарей в конце">CO₂ с учётом запасов, т</td><td>${co2Adj(a.co2)}</td><td>${co2Adj(b.co2)}</td></tr>`;
   set('g-co2', fmt(e.co2)); set('g-ren', fmt(100 * e.used / Math.max(1, e.used + e.grid))); set('g-cur', fmt(e.curtail));
   flows.grid.mw = e.grid; flows.wind.mw = Math.max(0, v('wind', 'power_mw') - e.curtail * 0.7); flows.pv.mw = Math.max(0, v('pv', 'power_mw') - e.curtail * 0.3);
   // «Как сейчас»: склады, конвейеры и мельницы берутся из тени V0 (свой рудник без
